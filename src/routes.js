@@ -17,12 +17,20 @@ const routes = [
     {
         path: "/login",
         index: true,
-        element: <LoginPage />,
+        element: (
+            <MainLayout>
+                <LoginPage />
+            </MainLayout>
+        ),
     },
     {
         path: "/register",
         index: true,
-        element: <RegisterPage />,
+        element: (
+            <MainLayout>
+                <RegisterPage />
+            </MainLayout>
+        ),
     },
 ];
 

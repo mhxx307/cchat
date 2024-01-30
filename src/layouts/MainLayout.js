@@ -7,7 +7,7 @@ function MainLayout({ children }) {
     return (
         <main className="min-h-screen flex flex-col">
             <Header />
-            <div className="flex-1">{children}</div>
+            <div className="flex-1 bg-[#e0e8ef] flex flex-col justify-center">{children}</div>
             <Footer />
         </main>
     );
