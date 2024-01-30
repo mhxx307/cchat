@@ -1,9 +1,8 @@
 import { useState } from "react";
-import httpRequest from "../configs/http";
 import { Link, useNavigate } from "react-router-dom";
+import authService from "../services/authService";
 
 function LoginPage() {
-    // hooks
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -12,13 +11,10 @@ function LoginPage() {
         e.preventDefault();
 
         try {
-            const result = await httpRequest.post("/auth/login", {
-                email,
-                password,
-            });
+            const result = await authService.login(email, password);
 
             if (result) {
-                navigate("/");
+                navigate("/chat");
             }
         } catch (error) {
             console.log(error);

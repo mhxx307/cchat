@@ -3,6 +3,8 @@ import HomePage from "./pages/home";
 import LoginPage from "./pages/login";
 import RegisterPage from "./pages/register";
 import MainLayout from "./layouts/MainLayout";
+import ChatPage from "./pages/chat";
+import ChatLayout from "./layouts/ChatLayout";
 
 const routes = [
     {
@@ -30,6 +32,15 @@ const routes = [
             <MainLayout>
                 <RegisterPage />
             </MainLayout>
+        ),
+    },
+    {
+        path: "/chat",
+        index: true,
+        element: (
+            <ChatLayout>
+                <ChatPage />
+            </ChatLayout>
         ),
     },
 ];
