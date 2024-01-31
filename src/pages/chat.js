@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ChatRoom from "../components/ChatRoom";
 
 function ChatPage() {
     const [selectedRoom, setSelectedRoom] = useState(null);
@@ -50,9 +51,10 @@ function ChatPage() {
             <div className={`flex-1 p-4 md:p-8 ${isSidebarVisible ? "w-full md:pl-[270px] lg:pl-[270px]" : "w-full"}`}>
                 {selectedRoom ? (
                     <>
-                        <h2 className="text-2xl font-semibold mb-4">Chatting in {selectedRoom}</h2>
+                        {/* <h2 className="text-2xl font-semibold mb-4">Chatting in {selectedRoom}</h2> */}
                         {/* Add your chat component here */}
                         {/* Example: <ChatRoom room={selectedRoom} /> */}
+                        <ChatRoom room={selectedRoom} />
                     </>
                 ) : (
                     <div className="text-center text-gray-600">
