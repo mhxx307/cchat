@@ -5,6 +5,8 @@ import RegisterPage from "./pages/register";
 import MainLayout from "./layouts/MainLayout";
 import ChatPage from "./pages/chat";
 import ChatLayout from "./layouts/ChatLayout";
+import ForgotPasswordPage from "./pages/forgotPassword";
+import Commit from "./pages/commit";
 
 const routes = [
     {
@@ -41,6 +43,24 @@ const routes = [
             <ChatLayout>
                 <ChatPage />
             </ChatLayout>
+        ),
+    },
+    {
+        path: "/forgot-password",
+        index: true,
+        element: (
+            <MainLayout>
+                <ForgotPasswordPage />
+            </MainLayout>
+        ),
+    },
+    {
+        path: "/commit",
+        index: true,
+        element: (
+            <MainLayout>
+                <Commit />
+            </MainLayout>
         ),
     },
 ];
