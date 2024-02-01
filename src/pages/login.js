@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import authService from "../services/authService";
+import { toast } from "react-toastify";
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -14,9 +15,11 @@ function LoginPage() {
             const result = await authService.login(email, password);
 
             if (result) {
+                toast.success("Login successful");
                 navigate("/chat");
             }
         } catch (error) {
+            toast.error("Invalid email or password");
             console.log(error);
         }
     };
@@ -91,12 +94,12 @@ function LoginPage() {
                                         </label>
                                     </div>
                                 </div>
-                                <to
-                                    href="/forgot-password"
+                                <Link
+                                    to="/forgot-password"
                                     className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500"
                                 >
                                     Forgot password?
-                                </to>
+                                </Link>
                             </div>
                             <button
                                 type="submit"
