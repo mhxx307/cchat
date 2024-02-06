@@ -14,12 +14,14 @@ function LoginPage() {
         try {
             const result = await authService.login(email, password);
 
-            if (result) {
+            if (result.user.verify) {
                 toast.success("Login successful");
                 navigate("/chat");
+            } else {
+                toast.error(result.message);
             }
         } catch (error) {
-            toast.error("Invalid email or password");
+            toast.error(error.response.data.message || "An error occurred. Please try again.");
             console.log(error);
         }
     };

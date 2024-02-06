@@ -6,7 +6,8 @@ import MainLayout from "./layouts/MainLayout";
 import ChatPage from "./pages/chat";
 import ChatLayout from "./layouts/ChatLayout";
 import ForgotPasswordPage from "./pages/forgotPassword";
-import Commit from "./pages/commit";
+import VerifyPasswordPage from "./pages/verify-password";
+import VerifyOtp from "./pages/verify-otp";
 
 const routes = [
     {
@@ -55,11 +56,20 @@ const routes = [
         ),
     },
     {
-        path: "/commit",
+        path: "/verify-password",
         index: true,
         element: (
             <MainLayout>
-                <Commit />
+                <VerifyPasswordPage />
+            </MainLayout>
+        ),
+    },
+    {
+        path: "/verify-otp",
+        index: true,
+        element: (
+            <MainLayout>
+                <VerifyOtp />
             </MainLayout>
         ),
     },

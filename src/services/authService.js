@@ -34,6 +34,14 @@ const authService = {
 
         return result;
     },
+    verifyOtp: async (userId, otp) => {
+        const result = await httpRequest.post("/auth/otpVerify", {
+            userId,
+            otp,
+        });
+
+        return result;
+    },
 };
 
 export default authService;

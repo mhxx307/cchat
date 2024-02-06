@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import authService from "../services/authService";
+import { useAuth } from "../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -7,6 +10,8 @@ function RegisterPage() {
         email: "",
         password: "",
     });
+    const { setUserForVerified } = useAuth();
+    const navigate = useNavigate();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -19,8 +24,18 @@ function RegisterPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         // Add registration logic here
-        const data = await authService.register(formData.username, formData.email, formData.password);
-        console.log(data);
+        try {
+            const result = await authService.register(formData.username, formData.email, formData.password);
+            console.log(result.data);
+            if (result.data) {
+                setUserForVerified(result.data);
+                toast.success(result.message);
+                navigate("/verify-otp");
+            }
+        } catch (error) {
+            toast.error("An error occurred. Please try again.");
+            console.log(error);
+        }
     };
 
     return (
