@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import authService from "../services/authService";
 
-function CommitPage() {
+function VerifyPasswordPage() {
     const [otp, setOtp] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -78,4 +78,4 @@ function CommitPage() {
     );
 }
 
-export default CommitPage;
+export default VerifyPasswordPage;
