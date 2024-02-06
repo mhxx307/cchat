@@ -1,17 +1,26 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import authService from "../services/authService";
+import { useAuth } from "../hooks/useAuth";
+import { toast } from "react-toastify";
 
 function ForgotPasswordPage() {
     const [email, setEmail] = useState("");
     const navigate = useNavigate();
+    const { setUserForVerified } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const data = await authService.forgotPassword(email);
-        console.log(data);
-        if (data) {
-            navigate("/commit");
+        try {
+            const result = await authService.forgotPassword(email);
+            if (result.data) {
+                setUserForVerified(result.data);
+                toast.success(result.message);
+                navigate("/verify-password");
+            }
+        } catch (error) {
+            toast.error("An error occurred. Please try again.");
+            console.log(error);
         }
     };
 

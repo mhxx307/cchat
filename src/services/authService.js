@@ -25,11 +25,10 @@ const authService = {
 
         return result;
     },
-    resetPassword: async (password, token, email) => {
+    resetPassword: async (userId, password) => {
         const result = await httpRequest.post("/auth/resetPassword", {
+            userId,
             newPassword: password,
-            otp: token,
-            email,
         });
 
         return result;

@@ -1,15 +1,32 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import OtpInput from "react-otp-input";
 import authService from "../services/authService";
+import { toast } from "react-toastify";
+import { useAuth } from "../hooks/useAuth";
 
 function VerifyPasswordPage() {
     const [otp, setOtp] = useState("");
-    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const { userForVerified, setUserForVerified } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        try {
+            const result = await authService.verifyOtp(userForVerified.userId, otp);
+            console.log("result", result);
+            if (result) {
+                const resetPasswordResult = await authService.resetPassword(userForVerified.userId, password);
+                console.log("reset", resetPasswordResult);
+                toast.success(resetPasswordResult.message);
+                setUserForVerified(null);
+                navigate("/login");
+            }
+        } catch (error) {
+            toast.error("An error occurred. Please try again.");
+            console.log(error);
+        }
     };
 
     return (
@@ -19,33 +36,15 @@ function VerifyPasswordPage() {
 
                 <div className="mb-4">
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="otp">
-                        Otp
+                        Enter your otp
                     </label>
-                    <input
-                        className="w-full px-3 py-2 border rounded focus:outline-none focus:shadow-outline"
-                        type="otp"
-                        id="otp"
-                        name="otp"
+                    <OtpInput
                         value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        required
-                        placeholder="Enter OTP sent to your email"
-                    />
-                </div>
-
-                <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="otp">
-                        Email
-                    </label>
-                    <input
-                        className="w-full px-3 py-2 border rounded focus:outline-none focus:shadow-outline"
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        placeholder="Enter OTP sent to your email"
+                        onChange={setOtp}
+                        numInputs={6}
+                        renderSeparator={<span>-</span>}
+                        renderInput={(props) => <input {...props} />}
+                        inputStyle="w-12 h-12 text-2xl border rounded focus:outline-none focus:shadow-outline"
                     />
                 </div>
 

@@ -26,7 +26,6 @@ function RegisterPage() {
         // Add registration logic here
         try {
             const result = await authService.register(formData.username, formData.email, formData.password);
-            console.log(result.data);
             if (result.data) {
                 setUserForVerified(result.data);
                 toast.success(result.message);
