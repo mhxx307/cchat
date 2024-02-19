@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import authService from "../services/authService";
 import { toast } from "react-toastify";
+import { useAuth } from "../hooks/useAuth";
 
 function LoginPage() {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const { setUserVerified } = useAuth();
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -16,6 +18,7 @@ function LoginPage() {
 
             if (result.user.verify) {
                 toast.success("Login successful");
+                setUserVerified(result.user);
                 navigate("/chat");
             } else {
                 toast.error(result.message);
