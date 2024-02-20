@@ -8,7 +8,7 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
     const [userForVerified, setUserForVerified] = useState(null);
-    const [userVerified, setUserVerified] = useState(false);
+    const [userVerified, setUserVerified] = useState(null);
 
     return (
         <AuthContext.Provider value={{ userForVerified, setUserForVerified, userVerified, setUserVerified }}>
