@@ -1,35 +1,35 @@
-import { Navigate, Outlet, useRoutes } from "react-router-dom";
-// import HomePage from "./pages/home";
-// import LoginPage from "./pages/login";
-// import RegisterPage from "./pages/register";
-// import MainLayout from "./layouts/MainLayout";
-// import ChatPage from "./pages/chat";
-// import ChatLayout from "./layouts/ChatLayout";
-// import ForgotPasswordPage from "./pages/forgotPassword";
-// import VerifyPasswordPage from "./pages/verify-password";
-// import VerifyOtp from "./pages/verify-otp";
-import { Suspense, lazy } from "react";
+import { Navigate, useRoutes } from "react-router-dom";
+import HomePage from "./pages/home";
+import LoginPage from "./pages/login";
+import RegisterPage from "./pages/register";
+import MainLayout from "./layouts/MainLayout";
+import ChatPage from "./pages/chat";
+import ChatLayout from "./layouts/ChatLayout";
+import ForgotPasswordPage from "./pages/forgotPassword";
+import VerifyPasswordPage from "./pages/verify-password";
+import VerifyOtp from "./pages/verify-otp";
+// import { Suspense, lazy } from "react";
 import { useAuth } from "./hooks/useAuth";
 
 // mport lazy
-const HomePage = lazy(() => import("./pages/home"));
-const LoginPage = lazy(() => import("./pages/login"));
-const RegisterPage = lazy(() => import("./pages/register"));
-const MainLayout = lazy(() => import("./layouts/MainLayout"));
-const ChatPage = lazy(() => import("./pages/chat"));
-const ChatLayout = lazy(() => import("./layouts/ChatLayout"));
-const ForgotPasswordPage = lazy(() => import("./pages/forgotPassword"));
-const VerifyPasswordPage = lazy(() => import("./pages/verify-password"));
-const VerifyOtp = lazy(() => import("./pages/verify-otp"));
+// const HomePage = lazy(() => import("./pages/home"));
+// const LoginPage = lazy(() => import("./pages/login"));
+// const RegisterPage = lazy(() => import("./pages/register"));
+// const MainLayout = lazy(() => import("./layouts/MainLayout"));
+// const ChatPage = lazy(() => import("./pages/chat"));
+// const ChatLayout = lazy(() => import("./layouts/ChatLayout"));
+// const ForgotPasswordPage = lazy(() => import("./pages/forgotPassword"));
+// const VerifyPasswordPage = lazy(() => import("./pages/verify-password"));
+// const VerifyOtp = lazy(() => import("./pages/verify-otp"));
 
-function ProtectedRoute() {
+function ProtectedRoute({ children }) {
     const { userVerified } = useAuth();
-    return userVerified ? <Outlet /> : <Navigate to={"/login"} />;
+    return userVerified ? children : <Navigate to={"/login"} />;
 }
 
-function RejectedRoute() {
+function RejectedRoute({ children }) {
     const { userVerified } = useAuth();
-    return !userVerified ? <Outlet /> : <Navigate to={"/chat"} />;
+    return !userVerified ? children : <Navigate to={"/chat"} />;
 }
 
 const routes = [
@@ -37,11 +37,11 @@ const routes = [
         path: "/",
         index: true,
         element: (
-            <MainLayout>
-                <Suspense>
+            <RejectedRoute>
+                <MainLayout>
                     <HomePage />
-                </Suspense>
-            </MainLayout>
+                </MainLayout>
+            </RejectedRoute>
         ),
     },
     {
@@ -50,9 +50,7 @@ const routes = [
         element: (
             <RejectedRoute>
                 <MainLayout>
-                    <Suspense>
-                        <LoginPage />
-                    </Suspense>
+                    <LoginPage />
                 </MainLayout>
             </RejectedRoute>
         ),
@@ -63,9 +61,7 @@ const routes = [
         element: (
             <RejectedRoute>
                 <MainLayout>
-                    <Suspense>
-                        <RegisterPage />
-                    </Suspense>
+                    <RegisterPage />
                 </MainLayout>
             </RejectedRoute>
         ),
@@ -76,9 +72,7 @@ const routes = [
         element: (
             <ProtectedRoute>
                 <ChatLayout>
-                    <Suspense>
-                        <ChatPage />
-                    </Suspense>
+                    <ChatPage />
                 </ChatLayout>
             </ProtectedRoute>
         ),
@@ -89,9 +83,7 @@ const routes = [
         element: (
             <RejectedRoute>
                 <MainLayout>
-                    <Suspense>
-                        <ForgotPasswordPage />
-                    </Suspense>
+                    <ForgotPasswordPage />
                 </MainLayout>
             </RejectedRoute>
         ),
@@ -102,9 +94,7 @@ const routes = [
         element: (
             <RejectedRoute>
                 <MainLayout>
-                    <Suspense>
-                        <VerifyPasswordPage />
-                    </Suspense>
+                    <VerifyPasswordPage />
                 </MainLayout>
             </RejectedRoute>
         ),
@@ -115,9 +105,7 @@ const routes = [
         element: (
             <RejectedRoute>
                 <MainLayout>
-                    <Suspense>
-                        <VerifyOtp />
-                    </Suspense>
+                    <VerifyOtp />
                 </MainLayout>
             </RejectedRoute>
         ),
