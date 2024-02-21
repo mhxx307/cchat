@@ -7,27 +7,30 @@ import { ThemeProvider } from "./hooks/useTheme";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AuthProvider } from "./hooks/useAuth";
+import { ChatProvider } from "./hooks/useChat";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
     <React.StrictMode>
         <BrowserRouter>
             <AuthProvider>
-                <ThemeProvider>
-                    <ToastContainer
-                        position="top-right"
-                        autoClose={5000}
-                        hideProgressBar={false}
-                        newestOnTop={false}
-                        closeOnClick
-                        rtl={false}
-                        pauseOnFocusLoss
-                        draggable
-                        pauseOnHover
-                        theme="light"
-                    />
-                    <App />
-                </ThemeProvider>
+                <ChatProvider>
+                    <ThemeProvider>
+                        <ToastContainer
+                            position="top-right"
+                            autoClose={5000}
+                            hideProgressBar={false}
+                            newestOnTop={false}
+                            closeOnClick
+                            rtl={false}
+                            pauseOnFocusLoss
+                            draggable
+                            pauseOnHover
+                            theme="light"
+                        />
+                        <App />
+                    </ThemeProvider>
+                </ChatProvider>
             </AuthProvider>
         </BrowserRouter>
     </React.StrictMode>

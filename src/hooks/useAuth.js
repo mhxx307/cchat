@@ -8,7 +8,12 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
     const [userForVerified, setUserForVerified] = useState(null);
-    const [userVerified, setUserVerified] = useState(null);
+    const [userVerified, setUserVerifiedState] = useState(JSON.parse(localStorage.getItem("user")) || null);
+
+    const setUserVerified = (user) => {
+        setUserVerifiedState(user);
+        localStorage.setItem("user", JSON.stringify(user));
+    };
 
     return (
         <AuthContext.Provider value={{ userForVerified, setUserForVerified, userVerified, setUserVerified }}>

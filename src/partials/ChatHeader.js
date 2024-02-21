@@ -2,9 +2,15 @@ import { Link } from "react-router-dom";
 import { RiLogoutBoxRLine } from "react-icons/ri";
 import { HiSun, HiMoon } from "react-icons/hi";
 import { useTheme } from "../hooks/useTheme";
+import { useAuth } from "../hooks/useAuth";
 
 function ChatHeader() {
     const { isDarkMode, toggleDarkMode } = useTheme();
+    const { setUserVerified } = useAuth();
+
+    const handleLogout = () => {
+        setUserVerified(null);
+    };
 
     return (
         <header className={`${isDarkMode ? "text-white bg-black" : "text-black bg-white"} p-4`}>
@@ -22,7 +28,7 @@ function ChatHeader() {
                             )}
                         </li>
 
-                        <li className="cursor-pointer">
+                        <li className="cursor-pointer" onClick={handleLogout}>
                             <RiLogoutBoxRLine className="inline-block" size={24} />
                         </li>
                     </ul>
