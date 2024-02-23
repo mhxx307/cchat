@@ -1,16 +1,32 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import EmojiPicker from "emoji-picker-react";
+import chatService from "../services/chatService";
+import { useAuth } from "../hooks/useAuth";
 
 const ChatRoom = ({ room }) => {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const { userVerified } = useAuth();
 
-    const handleSendMessage = () => {
+    console.log("room:", room);
+
+    const handleSendMessage = async () => {
         if (newMessage.trim() === "") return;
-
-        setMessages((prevMessages) => [...prevMessages, { text: newMessage, user: "You" }]);
-
+        await chatService.start1v1Chat({
+            senderId: userVerified._id,
+            receiverId: room.receiver._id,
+            message: newMessage,
+        });
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+                sender: userVerified,
+                receiver: room.receiver,
+                message: newMessage,
+                timestamp: new Date().toISOString(),
+            },
+        ]);
         setNewMessage("");
     };
 
@@ -18,25 +34,44 @@ const ChatRoom = ({ room }) => {
         setShowEmojiPicker(!showEmojiPicker);
     };
 
+    useEffect(() => {
+        // Fetch messages when room changes
+        const fetchMessages = async () => {
+            if (room) {
+                // Fetch messages from the server
+                const messages = await chatService.getChatMessages({
+                    senderId: room.sender._id,
+                    receiverId: room.receiver._id,
+                });
+                console.log("Fetched messages:", messages);
+                setMessages(messages);
+            }
+        };
+
+        fetchMessages();
+    }, [room]);
+
     return (
         <div className="chat-room p-4 flex flex-col justify-between h-[80vh] md:h-full bg-gray-100 rounded-md">
-            <h2 className="text-2xl font-semibold mb-4">Chatting in {room}</h2>
+            <h2 className="text-2xl font-semibold mb-4">Chatting in</h2>
             <div className="chat-messages flex-1 overflow-y-auto max-h-[60vh] mb-4">
-                {messages.map((message, index) => (
-                    <div key={index} className="message mb-4 flex items-start">
-                        <img
-                            src={`https://avatars.dicebear.com/api/bottts/${message.user}.svg`}
-                            alt="Avatar"
-                            className="w-8 h-8 rounded-full mr-2"
-                        />
-                        <div className="flex flex-col">
-                            <div>
-                                <span className="message-user font-bold">{message.user}</span>{" "}
-                                <span className="message-text">{message.text}</span>{" "}
+                {messages.map((message, index) =>
+                    message.sender._id === userVerified._id ? (
+                        <div key={index} className="flex flex-col items-end mb-4">
+                            <div className="bg-blue-500 text-white p-2 rounded-md max-w-[60%]">{message.message}</div>
+                            <div className="text-xs text-gray-500 mt-1">
+                                {new Date(message.timestamp).toLocaleString()}
                             </div>
                         </div>
-                    </div>
-                ))}
+                    ) : (
+                        <div key={index} className="flex flex-col items-start mb-4">
+                            <div className="bg-gray-300 p-2 rounded-md max-w-[60%]">{message.message}</div>
+                            <div className="text-xs text-gray-500 mt-1">
+                                {new Date(message.timestamp).toLocaleString()}
+                            </div>
+                        </div>
+                    )
+                )}
             </div>
             <div className="chat-input flex items-center">
                 {showEmojiPicker && (

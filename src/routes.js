@@ -8,19 +8,8 @@ import ChatLayout from "./layouts/ChatLayout";
 import ForgotPasswordPage from "./pages/forgotPassword";
 import VerifyPasswordPage from "./pages/verify-password";
 import VerifyOtp from "./pages/verify-otp";
-// import { Suspense, lazy } from "react";
+import SettingsPage from "./pages/settings";
 import { useAuth } from "./hooks/useAuth";
-
-// mport lazy
-// const HomePage = lazy(() => import("./pages/home"));
-// const LoginPage = lazy(() => import("./pages/login"));
-// const RegisterPage = lazy(() => import("./pages/register"));
-// const MainLayout = lazy(() => import("./layouts/MainLayout"));
-// const ChatPage = lazy(() => import("./pages/chat"));
-// const ChatLayout = lazy(() => import("./layouts/ChatLayout"));
-// const ForgotPasswordPage = lazy(() => import("./pages/forgotPassword"));
-// const VerifyPasswordPage = lazy(() => import("./pages/verify-password"));
-// const VerifyOtp = lazy(() => import("./pages/verify-otp"));
 
 function ProtectedRoute({ children }) {
     const { userVerified } = useAuth();
@@ -108,6 +97,18 @@ const routes = [
                     <VerifyOtp />
                 </MainLayout>
             </RejectedRoute>
+        ),
+    },
+    // settings page
+    {
+        path: "/settings",
+        index: true,
+        element: (
+            <ProtectedRoute>
+                <ChatLayout>
+                    <SettingsPage />
+                </ChatLayout>
+            </ProtectedRoute>
         ),
     },
 ];

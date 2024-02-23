@@ -1,4 +1,6 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import chatService from "../services/chatService";
+import { useAuth } from "./useAuth";
 
 const ChatContext = createContext();
 
@@ -9,13 +11,22 @@ export const useChat = () => {
 export const ChatProvider = ({ children }) => {
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [isSidebarVisible, setSidebarVisibility] = useState(true);
+    const { userVerified } = useAuth();
+    console.log("userVerified:", userVerified);
 
-    const [currentChatList, setCurrentChatList] = useState([
-        { id: 1, phoneNumber: "+123456789", username: "User 1", email: "user1@example.com" },
-        { id: 2, phoneNumber: "+987654321", username: "User 2", email: "user2@example.com" },
-        { id: 3, phoneNumber: "+112233445", username: "Group 1", email: "group1@example.com" },
-        { id: 4, phoneNumber: "+554433221", username: "Group 2", email: "group2@example.com" },
-    ]);
+    const [currentChatList, setCurrentChatList] = useState([]);
+
+    useEffect(() => {
+        // Fetch chat list
+        const fetchChatList = async () => {
+            // Fetch chat list from the server
+            const chatList = await chatService.getAllExistingChats(userVerified._id);
+            console.log("Fetched chat list:", chatList);
+            setCurrentChatList(chatList);
+        };
+
+        fetchChatList();
+    }, [userVerified]);
 
     return (
         <ChatContext.Provider
