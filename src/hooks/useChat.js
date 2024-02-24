@@ -25,7 +25,9 @@ export const ChatProvider = ({ children }) => {
             setCurrentChatList(chatList);
         };
 
-        fetchChatList();
+        if (userVerified) {
+            fetchChatList();
+        }
     }, [userVerified]);
 
     return (

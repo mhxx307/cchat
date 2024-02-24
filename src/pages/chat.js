@@ -40,7 +40,14 @@ export default ChatPage;
 
 const Sidebar = () => {
     const { userVerified } = useAuth();
-    const { selectedRoom, setSidebarVisibility, isSidebarVisible, setSelectedRoom, currentChatList } = useChat();
+    const {
+        selectedRoom,
+        setSidebarVisibility,
+        isSidebarVisible,
+        setSelectedRoom,
+        currentChatList,
+        setCurrentChatList,
+    } = useChat();
     const [searchTermUser, setSearchTermUser] = useState("");
     const [searchResults, setSearchResults] = useState([]);
 
@@ -51,7 +58,9 @@ const Sidebar = () => {
                 try {
                     const result = await userService.getUsersByNameAndPhoneNumber(searchTermUser);
                     console.log("Fetched users:", result);
-                    setSearchResults(result);
+                    // Remove the current user from the search results
+                    const filteredResult = result.filter((user) => user._id !== userVerified._id);
+                    setSearchResults(filteredResult);
                 } catch (error) {
                     console.error("Error fetching users:", error);
                 }
@@ -61,7 +70,7 @@ const Sidebar = () => {
         };
 
         fetchUsers();
-    }, [searchTermUser]);
+    }, [searchTermUser, userVerified._id]);
 
     const handleUserSelect = async (user) => {
         // Handle selecting a user, for example, start a new chat with the selected user
@@ -75,7 +84,14 @@ const Sidebar = () => {
         console.log("Started 1v1 chat:", chat);
 
         // Fetch chat list
-        // setSelectedRoom(chat);
+        setSelectedRoom(chat);
+
+        // Clear the search term
+        setSearchTermUser("");
+
+        // fetch chat list
+        const chatList = await chatService.getAllExistingChats(userVerified._id);
+        setCurrentChatList(chatList);
     };
 
     const handleRoomSelect = (room) => {
