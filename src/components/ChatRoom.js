@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import EmojiPicker from "emoji-picker-react";
 import chatService from "../services/chatService";
 import { useAuth } from "../hooks/useAuth";
+import socket from "../configs/socket";
 
 const ChatRoom = ({ room }) => {
     const [messages, setMessages] = useState([]);
@@ -9,7 +10,7 @@ const ChatRoom = ({ room }) => {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const { userVerified } = useAuth();
 
-    console.log("room:", room);
+    console.log("selected room:", room);
 
     const handleSendMessage = async () => {
         if (newMessage.trim() === "") return;
@@ -27,6 +28,15 @@ const ChatRoom = ({ room }) => {
                 timestamp: new Date().toISOString(),
             },
         ]);
+
+        // Emit a message event to the server
+        socket.emit("message", {
+            sender: userVerified,
+            receiver: room.receiver,
+            message: newMessage,
+            timestamp: new Date().toISOString(),
+        });
+
         setNewMessage("");
     };
 
@@ -50,6 +60,20 @@ const ChatRoom = ({ room }) => {
 
         fetchMessages();
     }, [room]);
+
+    useEffect(() => {
+        // Listen for new messages
+        socket.on("newChat", (data) => {
+            console.log("Received new chat:", data);
+            setMessages((prevMessages) => [...prevMessages, data]);
+        });
+
+        return () => {
+            // Clean up
+            socket.off("newChat");
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket]);
 
     return (
         <div className="chat-room p-4 flex flex-col justify-between h-[80vh] md:h-full bg-gray-100 rounded-md">
