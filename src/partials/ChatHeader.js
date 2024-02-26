@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { RiLogoutBoxRLine } from "react-icons/ri";
 import { HiSun, HiMoon } from "react-icons/hi";
+import { CiSettings } from "react-icons/ci";
 import { useTheme } from "../hooks/useTheme";
 import { useAuth } from "../hooks/useAuth";
 
@@ -26,6 +27,13 @@ function ChatHeader() {
                             ) : (
                                 <HiMoon className="inline-block" size={24} />
                             )}
+                        </li>
+
+                        {/* sett */}
+                        <li className="cursor-pointer">
+                            <Link to="/settings">
+                                <CiSettings size={24} />
+                            </Link>
                         </li>
 
                         <li className="cursor-pointer" onClick={handleLogout}>

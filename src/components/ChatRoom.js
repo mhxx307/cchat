@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import EmojiPicker from "emoji-picker-react";
 import chatService from "../services/chatService";
 import { useAuth } from "../hooks/useAuth";
@@ -9,8 +9,13 @@ const ChatRoom = ({ room }) => {
     const [newMessage, setNewMessage] = useState("");
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const { userVerified } = useAuth();
+    const messagesEndRef = useRef(null);
 
     console.log("selected room:", room);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
 
     const handleSendMessage = async () => {
         if (newMessage.trim() === "") return;
@@ -75,6 +80,11 @@ const ChatRoom = ({ room }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket]);
 
+    // scroll to the bottom of the chat messages
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
     return (
         <div className="chat-room p-4 flex flex-col justify-between h-[80vh] md:h-full bg-gray-100 rounded-md">
             <h2 className="text-2xl font-semibold mb-4">Chatting in</h2>
@@ -96,6 +106,7 @@ const ChatRoom = ({ room }) => {
                         </div>
                     )
                 )}
+                <div ref={messagesEndRef} />
             </div>
             <div className="chat-input flex items-center">
                 {showEmojiPicker && (
