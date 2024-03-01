@@ -1,15 +1,14 @@
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
 
-import { initializeApp } from "firebase/app";
-import {getAuth} from "firebase/auth";
-
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAWIKatXREI_1IvnwZQDr11alf-ORjCGyI",
-  authDomain: "do-an-ffaed.firebaseapp.com",
-  projectId: "do-an-ffaed",
-  storageBucket: "do-an-ffaed.appspot.com",
-  messagingSenderId: "244287535276",
-  appId: "1:244287535276:web:667ca101122d60554ec709",
-  measurementId: "G-2X42NVBW4N"
+    apiKey: 'AIzaSyADNbJAS0obqkPYpHd18i096UQ8DXThUW4',
+    authDomain: 'cong-nghe-moi-firebase.firebaseapp.com',
+    projectId: 'cong-nghe-moi-firebase',
+    storageBucket: 'cong-nghe-moi-firebase.appspot.com',
+    messagingSenderId: '773462491468',
+    appId: '1:773462491468:web:4239a3d10e641326230fe9',
 };
 
 // Initialize Firebase

@@ -1,24 +1,24 @@
-import React, { useEffect, useRef, useState } from "react";
-import EmojiPicker from "emoji-picker-react";
-import chatService from "../services/chatService";
-import { useAuth } from "../hooks/useAuth";
-import socket from "../configs/socket";
+import { useEffect, useRef, useState } from 'react';
+import EmojiPicker from 'emoji-picker-react';
+import chatService from '../services/chatService';
+import { useAuth } from '../hooks/useAuth';
+import socket from '../configs/socket';
 
 const ChatRoom = ({ room }) => {
     const [messages, setMessages] = useState([]);
-    const [newMessage, setNewMessage] = useState("");
+    const [newMessage, setNewMessage] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const { userVerified } = useAuth();
     const messagesEndRef = useRef(null);
 
-    console.log("selected room:", room);
+    console.log('selected room:', room);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     const handleSendMessage = async () => {
-        if (newMessage.trim() === "") return;
+        if (newMessage.trim() === '') return;
         await chatService.start1v1Chat({
             senderId: userVerified._id,
             receiverId: room.receiver._id,
@@ -35,14 +35,14 @@ const ChatRoom = ({ room }) => {
         ]);
 
         // Emit a message event to the server
-        socket.emit("message", {
+        socket.emit('message', {
             sender: userVerified,
             receiver: room.receiver,
             message: newMessage,
             timestamp: new Date().toISOString(),
         });
 
-        setNewMessage("");
+        setNewMessage('');
     };
 
     const toggleEmojiPicker = () => {
@@ -58,7 +58,7 @@ const ChatRoom = ({ room }) => {
                     senderId: room.sender._id,
                     receiverId: room.receiver._id,
                 });
-                console.log("Fetched messages:", messages);
+                console.log('Fetched messages:', messages);
                 setMessages(messages);
             }
         };
@@ -68,14 +68,14 @@ const ChatRoom = ({ room }) => {
 
     useEffect(() => {
         // Listen for new messages
-        socket.on("newChat", (data) => {
-            console.log("Received new chat:", data);
+        socket.on('newChat', (data) => {
+            console.log('Received new chat:', data);
             setMessages((prevMessages) => [...prevMessages, data]);
         });
 
         return () => {
             // Clean up
-            socket.off("newChat");
+            socket.off('newChat');
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket]);
@@ -86,31 +86,41 @@ const ChatRoom = ({ room }) => {
     }, [messages]);
 
     return (
-        <div className="chat-room p-4 flex flex-col justify-between h-[80vh] md:h-full bg-gray-100 rounded-md">
-            <h2 className="text-2xl font-semibold mb-4">Chatting in</h2>
-            <div className="chat-messages flex-1 overflow-y-auto max-h-[60vh] mb-4">
+        <div className="chat-room flex h-[80vh] flex-col justify-between rounded-md bg-gray-100 p-4 md:h-full">
+            <h2 className="mb-4 text-2xl font-semibold">Chatting in</h2>
+            <div className="chat-messages mb-4 max-h-[60vh] flex-1 overflow-y-auto">
                 {messages.map((message, index) =>
                     message.sender._id === userVerified._id ? (
-                        <div key={index} className="flex flex-col items-end mb-4">
-                            <div className="bg-blue-500 text-white p-2 rounded-md max-w-[60%]">{message.message}</div>
-                            <div className="text-xs text-gray-500 mt-1">
+                        <div
+                            key={index}
+                            className="mb-4 flex flex-col items-end"
+                        >
+                            <div className="max-w-[60%] rounded-md bg-blue-500 p-2 text-white">
+                                {message.message}
+                            </div>
+                            <div className="mt-1 text-xs text-gray-500">
                                 {new Date(message.timestamp).toLocaleString()}
                             </div>
                         </div>
                     ) : (
-                        <div key={index} className="flex flex-col items-start mb-4">
-                            <div className="bg-gray-300 p-2 rounded-md max-w-[60%]">{message.message}</div>
-                            <div className="text-xs text-gray-500 mt-1">
+                        <div
+                            key={index}
+                            className="mb-4 flex flex-col items-start"
+                        >
+                            <div className="max-w-[60%] rounded-md bg-gray-300 p-2">
+                                {message.message}
+                            </div>
+                            <div className="mt-1 text-xs text-gray-500">
                                 {new Date(message.timestamp).toLocaleString()}
                             </div>
                         </div>
-                    )
+                    ),
                 )}
                 <div ref={messagesEndRef} />
             </div>
             <div className="chat-input flex items-center">
                 {showEmojiPicker && (
-                    <div className="absolute top-[20%] right-[5%] mt-8">
+                    <div className="absolute right-[5%] top-[20%] mt-8">
                         <EmojiPicker
                             onEmojiClick={(props) => {
                                 setShowEmojiPicker(false);
@@ -124,14 +134,17 @@ const ChatRoom = ({ room }) => {
                     placeholder="Type your message..."
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    className="flex-1 p-2 mr-2 border rounded-md focus:outline-none focus:border-blue-500"
+                    className="mr-2 flex-1 rounded-md border p-2 focus:border-blue-500 focus:outline-none"
                 />
-                <button onClick={toggleEmojiPicker} className="text-2xl focus:outline-none">
+                <button
+                    onClick={toggleEmojiPicker}
+                    className="text-2xl focus:outline-none"
+                >
                     😊
                 </button>
                 <button
                     onClick={handleSendMessage}
-                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    className="focus:shadow-outline rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-600 focus:outline-none"
                 >
                     Send
                 </button>
