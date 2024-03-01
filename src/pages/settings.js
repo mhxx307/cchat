@@ -48,6 +48,8 @@ function Settings() {
             // Implement logic to save changes
             await userService.updateUserById(userVerified._id, {
                 username,
+                profilePic: avatar,
+                email: userVerified.email,
             });
         } catch (error) {
             console.error('Error occurred while saving changes:', error);
@@ -181,7 +183,7 @@ function Settings() {
                         // Show spinner when loading
                         <svg
                             aria-hidden="true"
-                            class="h-8 w-8 animate-spin fill-blue-600 text-gray-200 dark:text-gray-600"
+                            className="h-8 w-8 animate-spin fill-blue-600 text-gray-200 dark:text-gray-600"
                             viewBox="0 0 100 101"
                             fill="none"
                             xmlns="http://www.w3.org/2000/svg"
