@@ -8,6 +8,7 @@ import ChatLayout from "./layouts/ChatLayout";
 import ForgotPasswordPage from "./pages/forgotPassword";
 import VerifyPasswordPage from "./pages/verify-password";
 import VerifyOtp from "./pages/verify-otp";
+import PhoneLogin from "./pages/phone-login";
 
 const routes = [
     {
@@ -70,6 +71,15 @@ const routes = [
         element: (
             <MainLayout>
                 <VerifyOtp />
+            </MainLayout>
+        ),
+    },
+    {
+        path: "/phone-login",
+        index: true,
+        element: (
+            <MainLayout>
+                <PhoneLogin />
             </MainLayout>
         ),
     },
