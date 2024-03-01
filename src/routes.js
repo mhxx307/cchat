@@ -8,6 +8,7 @@ import ChatLayout from "./layouts/ChatLayout";
 import ForgotPasswordPage from "./pages/forgotPassword";
 import VerifyPasswordPage from "./pages/verify-password";
 import VerifyOtp from "./pages/verify-otp";
+import PhoneLogin from "./pages/phone-login";
 import SettingsPage from "./pages/settings";
 import { useAuth } from "./hooks/useAuth";
 
@@ -109,6 +110,15 @@ const routes = [
                     <SettingsPage />
                 </ChatLayout>
             </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/phone-login",
+        index: true,
+        element: (
+            <MainLayout>
+                <PhoneLogin />
+            </MainLayout>
         ),
     },
 ];
