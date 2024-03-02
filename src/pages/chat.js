@@ -79,9 +79,7 @@ const Sidebar = () => {
             if (searchTermUser.trim() !== '') {
                 try {
                     const result =
-                        await userService.getUsersByNameAndPhoneNumber(
-                            searchTermUser,
-                        );
+                        await userService.getUsersBySearchTerms(searchTermUser);
                     console.log('Fetched users:', result);
                     // Remove the current user from the search results
                     const filteredResult = result.filter(
@@ -130,8 +128,6 @@ const Sidebar = () => {
     const toggleSidebar = () => {
         setSidebarVisibility(!isSidebarVisible);
     };
-
-    // setCurrentChatList
 
     return (
         <div
