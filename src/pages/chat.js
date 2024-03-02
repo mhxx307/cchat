@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react';
+import { MdOutlineGroupAdd } from 'react-icons/md';
+import { FaCamera } from 'react-icons/fa';
+import 'react-responsive-modal/styles.css';
+import { Modal } from 'react-responsive-modal';
+import { debounce } from 'lodash';
+
 import ChatRoom from '../components/ChatRoom';
 import { useChat } from '../hooks/useChat';
 import userService from '../services/userService';
 import chatService from '../services/chatService';
 import { useAuth } from '../hooks/useAuth';
-
 import socket from '../configs/socket';
+import FallbackAvatar from '../components/FallbackAvatar';
 
 function ChatPage() {
     const { selectedRoom, isSidebarVisible } = useChat();
@@ -54,6 +60,9 @@ const Sidebar = () => {
     } = useChat();
     const [searchTermUser, setSearchTermUser] = useState('');
     const [searchResults, setSearchResults] = useState([]);
+    const [open, setOpen] = useState(false);
+    const onOpenModal = () => setOpen(true);
+    const onCloseModal = () => setOpen(false);
 
     useEffect(() => {
         // listen for new chat
@@ -100,16 +109,34 @@ const Sidebar = () => {
     const handleUserSelect = async (user) => {
         // Handle selecting a user, for example, start a new chat with the selected user
         console.log('Selected user:', user);
-        const chat = await chatService.start1v1Chat({
-            senderId: userVerified._id,
-            receiverId: user._id,
-            message: 'Hello!',
-        });
+        // check if a chat already exists
+        const existingChat = currentChatList.find(
+            (chat) =>
+                chat.sender._id === user._id || chat.receiver._id === user._id,
+        );
 
-        console.log('Started 1v1 chat:', chat);
+        if (existingChat) {
+            console.log('Chat already exists:', existingChat);
+            setSelectedRoom(existingChat);
+            return;
+        } else {
+            const chat = await chatService.start1v1Chat({
+                senderId: userVerified._id,
+                receiverId: user._id,
+                message: 'Hello!',
+            });
+            console.log('Started 1v1 chat:', chat);
+            // Emit a message event to the server
+            socket.emit('message', {
+                sender: userVerified,
+                receiver: chat.receiver,
+                message: 'Hello!',
+                timestamp: new Date().toISOString(),
+            });
 
-        // Fetch chat list
-        setSelectedRoom(chat);
+            // Fetch chat list
+            setSelectedRoom(chat);
+        }
 
         // Clear the search term
         setSearchTermUser('');
@@ -129,6 +156,21 @@ const Sidebar = () => {
         setSidebarVisibility(!isSidebarVisible);
     };
 
+    const handleOpenAddGroupModal = () => {
+        // Open the modal to add a new group
+        onOpenModal();
+    };
+
+    //    debounce function
+    const delayedSearch = debounce((searchTerm) => {
+        setSearchTermUser(searchTerm);
+    }, 500);
+
+    const handleSearchChange = (e) => {
+        const term = e.target.value;
+        delayedSearch(term);
+    };
+
     return (
         <div
             className={`fixed flex h-full w-3/4 flex-col bg-gray-800 p-4 text-white transition-all duration-300 md:w-[270px] lg:w-[270px] ${
@@ -143,13 +185,25 @@ const Sidebar = () => {
             </button>
 
             <div className="mb-4">
-                <input
-                    type="text"
-                    className="w-full rounded bg-gray-700 px-4 py-2 text-white"
-                    placeholder="Search"
-                    value={searchTermUser}
-                    onChange={(e) => setSearchTermUser(e.target.value)}
-                />
+                <div className="mb-4 flex items-center justify-between">
+                    <input
+                        type="text"
+                        className="focus:shadow-outline mr-2 w-full rounded bg-gray-700 px-4 py-2 text-white focus:outline-none"
+                        placeholder="Search"
+                        value={searchTermUser}
+                        onChange={handleSearchChange}
+                    />
+                    <MdOutlineGroupAdd
+                        className="cursor-pointer text-2xl hover:opacity-80"
+                        onClick={handleOpenAddGroupModal}
+                    />
+                    <Modal open={open} onClose={onCloseModal} center>
+                        <AddGroupModal
+                            searchResults={searchResults}
+                            onCloseModal={onCloseModal}
+                        />
+                    </Modal>
+                </div>
                 <ul>
                     {searchResults.map((user, index) => (
                         <li
@@ -188,18 +242,13 @@ const Sidebar = () => {
                                         className="h-10 w-10 rounded-full"
                                     />
                                 ) : (
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-500">
-                                        <span className="text-2xl font-semibold text-white">
-                                            {userVerified._id ===
-                                            room.sender._id
+                                    <FallbackAvatar
+                                        name={
+                                            userVerified._id === room.sender._id
                                                 ? room.receiver.username
-                                                      .charAt(0)
-                                                      .toUpperCase()
                                                 : room.sender.username
-                                                      .charAt(0)
-                                                      .toUpperCase()}
-                                        </span>
-                                    </div>
+                                        }
+                                    />
                                 )}
                                 <span className="ml-2">
                                     {userVerified._id === room.sender._id
@@ -215,6 +264,181 @@ const Sidebar = () => {
                     </li>
                 )}
             </ul>
+        </div>
+    );
+};
+
+const AddGroupModal = ({ onCloseModal }) => {
+    // State variables
+    const [groupName, setGroupName] = useState('');
+    const [groupImage, setGroupImage] = useState(null);
+    const [selectedUsers, setSelectedUsers] = useState([]);
+    const [userSearchResults, setUserSearchResults] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Function to fetch users based on search term
+    useEffect(() => {
+        const fetchUsers = async () => {
+            if (searchTerm.trim() !== '') {
+                try {
+                    const result =
+                        await userService.getUsersBySearchTerms(searchTerm);
+                    setUserSearchResults(result);
+                } catch (error) {
+                    console.error('Error fetching users:', error);
+                }
+            } else {
+                setUserSearchResults([]);
+            }
+        };
+        fetchUsers();
+    }, [searchTerm]);
+
+    // Function to handle changes in group name
+    const handleGroupNameChange = (e) => {
+        setGroupName(e.target.value);
+    };
+
+    // Function to handle changes in group image
+    const handleGroupImageChange = (e) => {
+        const imageFile = e.target.files[0];
+        setGroupImage(imageFile);
+    };
+
+    // Function to toggle user selection
+    const toggleUserSelection = (user) => {
+        const isSelected = selectedUsers.some((u) => u._id === user._id);
+        if (isSelected) {
+            setSelectedUsers(selectedUsers.filter((u) => u._id !== user._id));
+        } else {
+            setSelectedUsers([...selectedUsers, user]);
+        }
+    };
+
+    // Function to remove selected user
+    const removeSelectedUser = (userId) => {
+        setSelectedUsers(selectedUsers.filter((user) => user._id !== userId));
+    };
+
+    // Function to handle create group
+    const handleCreateGroup = () => {
+        console.log('Group Name:', groupName);
+        console.log('Group Image:', groupImage);
+        console.log('Selected Users:', selectedUsers);
+        onCloseModal(); // Close the modal after group creation
+    };
+
+    // Function to handle search input with debounce
+    const handleSearchChange = (e) => {
+        const term = e.target.value;
+        setSearchTerm(term);
+    };
+
+    return (
+        <div className="flex h-full items-center justify-center">
+            <div className="w-96 rounded bg-white p-6">
+                <h2 className="mb-4 text-2xl font-semibold">
+                    Create New Group
+                </h2>
+
+                <div className="mb-4 flex items-center">
+                    <label
+                        htmlFor="group-image"
+                        className="mr-4 flex cursor-pointer items-center justify-center rounded-full bg-gray-300 p-4 hover:bg-gray-400"
+                    >
+                        <FaCamera className="text-xl" />
+                        <input
+                            type="file"
+                            id="group-image"
+                            className="hidden"
+                            onChange={handleGroupImageChange}
+                        />
+                    </label>
+                    <input
+                        type="text"
+                        className="flex-1 rounded border border-gray-300 px-4 py-2 focus:outline-none"
+                        placeholder="Group Name"
+                        value={groupName}
+                        onChange={handleGroupNameChange}
+                    />
+                </div>
+
+                {/* Search users */}
+                <input
+                    type="text"
+                    className="mb-4 w-full rounded border border-gray-300 px-4 py-2 focus:outline-none"
+                    placeholder="Search Users"
+                    onChange={handleSearchChange}
+                />
+
+                {/* User search results */}
+                <div className="mb-4 max-h-40 overflow-y-auto">
+                    {userSearchResults.map((user) => (
+                        <div
+                            key={user._id}
+                            className={`flex cursor-pointer items-center justify-between px-4 py-2 hover:bg-gray-100 ${selectedUsers.some((u) => u._id === user._id) && 'bg-blue-100'}`}
+                            onClick={() => toggleUserSelection(user)}
+                        >
+                            <div className="flex items-center">
+                                {user.profilePic ? (
+                                    <img
+                                        src={user.profilePic}
+                                        alt={user.username}
+                                        className="h-10 w-10 rounded-full"
+                                    />
+                                ) : (
+                                    <FallbackAvatar name={user.username} />
+                                )}
+
+                                <span className="ml-2">{user.username}</span>
+                            </div>
+                            <span>
+                                {selectedUsers.some(
+                                    (u) => u._id === user._id,
+                                ) && 'Selected'}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Selected users */}
+                <div className="mb-4">
+                    {selectedUsers.map((user) => (
+                        <div
+                            key={user._id}
+                            className="mb-2 flex items-center justify-between rounded-md bg-blue-100 px-4 py-2"
+                        >
+                            <div className="flex items-center">
+                                {user.profilePic ? (
+                                    <img
+                                        src={user.profilePic}
+                                        alt={user.username}
+                                        className="h-8 w-8 rounded-full"
+                                    />
+                                ) : (
+                                    <FallbackAvatar name={user.username} />
+                                )}
+
+                                <span className="ml-2">{user.username}</span>
+                            </div>
+                            <button
+                                className="text-red-500"
+                                onClick={() => removeSelectedUser(user._id)}
+                            >
+                                Remove
+                            </button>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Create group button */}
+                <button
+                    className="mt-4 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+                    onClick={handleCreateGroup}
+                >
+                    Create Group
+                </button>
+            </div>
         </div>
     );
 };
