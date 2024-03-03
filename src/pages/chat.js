@@ -4,6 +4,7 @@ import { FaCamera } from 'react-icons/fa';
 import 'react-responsive-modal/styles.css';
 import { Modal } from 'react-responsive-modal';
 import { debounce } from 'lodash';
+import { toast } from 'react-toastify';
 
 import ChatRoom from '../components/ChatRoom';
 import { useChat } from '../hooks/useChat';
@@ -12,6 +13,7 @@ import chatService from '../services/chatService';
 import { useAuth } from '../hooks/useAuth';
 import socket from '../configs/socket';
 import FallbackAvatar from '../components/FallbackAvatar';
+import GroupChatRoom from '../components/GroupChatRoom';
 
 function ChatPage() {
     const { selectedRoom, isSidebarVisible } = useChat();
@@ -23,10 +25,11 @@ function ChatPage() {
             >
                 {selectedRoom ? (
                     <>
-                        {/* <h2 className="text-2xl font-semibold mb-4">Chatting in {selectedRoom}</h2> */}
-                        {/* Add your chat component here */}
-                        {/* Example: <ChatRoom room={selectedRoom} /> */}
-                        <ChatRoom room={selectedRoom} />
+                        {selectedRoom.group ? (
+                            <GroupChatRoom selectedRoom={selectedRoom} />
+                        ) : (
+                            <ChatRoom room={selectedRoom} />
+                        )}
                     </>
                 ) : (
                     <div className="text-center text-gray-600">
@@ -63,6 +66,8 @@ const Sidebar = () => {
     const [open, setOpen] = useState(false);
     const onOpenModal = () => setOpen(true);
     const onCloseModal = () => setOpen(false);
+
+    console.log('Current Chat List:', currentChatList);
 
     useEffect(() => {
         // listen for new chat
@@ -201,6 +206,7 @@ const Sidebar = () => {
                         <AddGroupModal
                             searchResults={searchResults}
                             onCloseModal={onCloseModal}
+                            userVerified={userVerified}
                         />
                     </Modal>
                 </div>
@@ -230,32 +236,61 @@ const Sidebar = () => {
                             onClick={() => handleRoomSelect(room)}
                         >
                             {/* avatar & username */}
-                            <div className="flex items-center">
-                                {room.profilePic ? (
-                                    <img
-                                        src={
-                                            userVerified._id === room.sender._id
-                                                ? room.receiver.profilePic
-                                                : room.sender.profilePic
-                                        }
-                                        alt={room.username}
-                                        className="h-10 w-10 rounded-full"
-                                    />
-                                ) : (
-                                    <FallbackAvatar
-                                        name={
-                                            userVerified._id === room.sender._id
+                            {room.group ? (
+                                <div className="flex items-center">
+                                    {room.group.profilePic ? (
+                                        <img
+                                            src={room.group.profilePic}
+                                            alt={room.group.name}
+                                            className="h-10 w-10 rounded-full"
+                                        />
+                                    ) : (
+                                        <FallbackAvatar
+                                            name={room.group.name}
+                                        />
+                                    )}
+                                    <span className="ml-2">
+                                        {room.group.name}
+                                    </span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center">
+                                    {room.profilePic ? (
+                                        <img
+                                            src={
+                                                userVerified._id ===
+                                                room.sender._id
+                                                    ? room.receiver
+                                                        ? room.receiver
+                                                              .profilePic
+                                                        : room.group.profilePic
+                                                    : room.sender.profilePic
+                                            }
+                                            alt={room.username}
+                                            className="h-10 w-10 rounded-full"
+                                        />
+                                    ) : (
+                                        // if not have recever will show group name
+                                        <FallbackAvatar
+                                            name={
+                                                userVerified._id ===
+                                                room.sender._id
+                                                    ? room.receiver
+                                                        ? room.receiver.username
+                                                        : room.group.name
+                                                    : room.sender.username
+                                            }
+                                        />
+                                    )}
+                                    <span className="ml-2">
+                                        {userVerified._id === room.sender._id
+                                            ? room.receiver
                                                 ? room.receiver.username
-                                                : room.sender.username
-                                        }
-                                    />
-                                )}
-                                <span className="ml-2">
-                                    {userVerified._id === room.sender._id
-                                        ? room.receiver.username
-                                        : room.sender.username}
-                                </span>
-                            </div>
+                                                : room.group.name
+                                            : room.sender.username}
+                                    </span>
+                                </div>
+                            )}
                         </li>
                     ))
                 ) : (
@@ -268,7 +303,7 @@ const Sidebar = () => {
     );
 };
 
-const AddGroupModal = ({ onCloseModal }) => {
+const AddGroupModal = ({ onCloseModal, userVerified }) => {
     // State variables
     const [groupName, setGroupName] = useState('');
     const [groupImage, setGroupImage] = useState(null);
@@ -283,7 +318,11 @@ const AddGroupModal = ({ onCloseModal }) => {
                 try {
                     const result =
                         await userService.getUsersBySearchTerms(searchTerm);
-                    setUserSearchResults(result);
+                    // Remove the current user from the search results
+                    const filteredResult = result.filter(
+                        (user) => user._id !== userVerified._id,
+                    );
+                    setUserSearchResults(filteredResult);
                 } catch (error) {
                     console.error('Error fetching users:', error);
                 }
@@ -292,7 +331,7 @@ const AddGroupModal = ({ onCloseModal }) => {
             }
         };
         fetchUsers();
-    }, [searchTerm]);
+    }, [searchTerm, userVerified._id]);
 
     // Function to handle changes in group name
     const handleGroupNameChange = (e) => {
@@ -321,11 +360,42 @@ const AddGroupModal = ({ onCloseModal }) => {
     };
 
     // Function to handle create group
-    const handleCreateGroup = () => {
-        console.log('Group Name:', groupName);
-        console.log('Group Image:', groupImage);
-        console.log('Selected Users:', selectedUsers);
-        onCloseModal(); // Close the modal after group creation
+    const handleCreateGroup = async () => {
+        try {
+            console.log('Group Name:', groupName);
+            console.log('Group Image:', groupImage);
+            console.log('Selected Users:', selectedUsers);
+
+            // members = array of userIds of selected users + current user
+            const selectedUserIdList = selectedUsers.map((user) => user._id);
+            const members = [userVerified._id, ...selectedUserIdList];
+
+            const result = await chatService.createGroup({
+                name: groupName,
+                members: members,
+            });
+
+            console.log('Created Group:', result);
+
+            // real-time update
+            socket.emit('newChat', {
+                sender: selectedUsers,
+                receiver: selectedUsers,
+                message: 'Welcome to the group!',
+            });
+        } catch (error) {
+            console.error('Error creating group:', error);
+            toast.error('Error creating group');
+        } finally {
+            // Clear the form
+            setGroupName('');
+            setGroupImage(null);
+            setSelectedUsers([]);
+            setUserSearchResults([]);
+            setSearchTerm('');
+            toast.success('Group created successfully');
+            onCloseModal(); // Close the modal after group creation
+        }
     };
 
     // Function to handle search input with debounce

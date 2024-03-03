@@ -3,48 +3,41 @@ import EmojiPicker from 'emoji-picker-react';
 import chatService from '../services/chatService';
 import { useAuth } from '../hooks/useAuth';
 import socket from '../configs/socket';
+import FallbackAvatar from './FallbackAvatar';
 
-const ChatRoom = ({ room }) => {
+function GroupChatRoom({ selectedRoom }) {
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
-    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const { userVerified } = useAuth();
     const messagesEndRef = useRef(null);
 
-    console.log('selected room:', room);
-
     useEffect(() => {
-        // Fetch messages when room changes
         const fetchMessages = async () => {
-            if (room) {
-                // Fetch messages from the server
-                const messages = await chatService.getChatMessages({
-                    senderId: room.sender._id,
-                    receiverId: room.receiver._id,
+            try {
+                const result = await chatService.getGroupChatMessages({
+                    groupId: selectedRoom.group._id,
                 });
-                console.log('Fetched messages:', messages);
-                setMessages(messages);
+                console.log('Fetched messages:', result);
+                setMessages(result); // Assuming the messages are returned as an array
+            } catch (error) {
+                console.error('Error fetching messages:', error);
             }
         };
-
         fetchMessages();
-    }, [room]);
+    }, [selectedRoom]);
 
     useEffect(() => {
-        // Listen for new messages
-        socket.on('newChat', (data) => {
+        socket.on('newChatGroup', (data) => {
             console.log('Received new chat:', data);
             setMessages((prevMessages) => [...prevMessages, data]);
         });
 
         return () => {
-            // Clean up
-            socket.off('newChat');
+            socket.off('newChatGroup');
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [socket]);
+    }, []);
 
-    // scroll to the bottom of the chat messages
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
@@ -54,56 +47,79 @@ const ChatRoom = ({ room }) => {
     };
 
     const handleSendMessage = async () => {
-        if (newMessage.trim() === '') return;
-        await chatService.start1v1Chat({
-            senderId: userVerified._id,
-            receiverId: room.receiver._id,
-            message: newMessage,
-        });
-        setMessages((prevMessages) => [
-            ...prevMessages,
-            {
+        try {
+            if (newMessage.trim() === '') return;
+            await chatService.startGroupChat({
+                groupId: selectedRoom.group._id,
+                message: newMessage,
+                senderId: userVerified._id,
+            });
+            setMessages([
+                ...messages,
+                {
+                    senderId: userVerified._id,
+                    message: newMessage,
+                    timestamp: new Date().toISOString(),
+                },
+            ]);
+            socket.emit('messageChatGroup', {
                 sender: userVerified,
-                receiver: room.receiver,
+                group: selectedRoom.group,
+                members: selectedRoom.members,
                 message: newMessage,
                 timestamp: new Date().toISOString(),
-            },
-        ]);
-
-        // Emit a message event to the server
-        socket.emit('message', {
-            sender: userVerified,
-            receiver: room.receiver,
-            message: newMessage,
-            timestamp: new Date().toISOString(),
-        });
-
-        setNewMessage('');
+            });
+            setNewMessage('');
+        } catch (error) {
+            console.error('Error sending message:', error);
+        }
     };
 
     const toggleEmojiPicker = () => {
         setShowEmojiPicker(!showEmojiPicker);
     };
 
+    const handleFileChange = (e) => {
+        // Handle file upload logic here
+        const file = e.target.files[0];
+        console.log('Uploaded file:', file);
+    };
+
     return (
         <div className="chat-room flex h-[80vh] flex-col justify-between rounded-md bg-gray-100 p-4 md:h-full">
-            <h2 className="mb-4 text-2xl font-semibold">Chatting in</h2>
+            <h2 className="mb-4 text-2xl font-semibold">Group Chat Room</h2>
             <div className="chat-messages mb-4 max-h-[60vh] flex-1 overflow-y-auto">
                 {messages.length > 0 &&
                     messages.map((message, index) =>
                         message.sender._id === userVerified._id ? (
                             <div
-                                key={index}
-                                className="mb-4 flex flex-col items-end"
+                                key={message._id}
+                                className="mb-4 flex justify-end"
                             >
-                                <div className="max-w-[60%] rounded-md bg-blue-500 p-2 text-white">
-                                    {message.message}
+                                {/* messages */}
+                                <div className="mr-4 max-w-[60%]">
+                                    <div className="rounded-md bg-blue-500 p-2 text-white">
+                                        {message.message}
+                                    </div>
+                                    <div className="mt-1 text-xs text-gray-500">
+                                        {new Date(
+                                            message.timestamp,
+                                        ).toLocaleString()}
+                                    </div>
                                 </div>
-                                <div className="mt-1 text-xs text-gray-500">
-                                    {new Date(
-                                        message.timestamp,
-                                    ).toLocaleString()}
-                                </div>
+
+                                {/* sender's profile pic */}
+                                {message.sender.profilePic ? (
+                                    <img
+                                        src={message.sender.profilePic}
+                                        alt="Avatar"
+                                        className="h-6 w-6 rounded-full"
+                                    />
+                                ) : (
+                                    <FallbackAvatar
+                                        name={message.sender.username}
+                                    />
+                                )}
                             </div>
                         ) : (
                             <div
@@ -141,6 +157,19 @@ const ChatRoom = ({ room }) => {
                     onChange={(e) => setNewMessage(e.target.value)}
                     className="mr-2 flex-1 rounded-md border p-2 focus:border-blue-500 focus:outline-none"
                 />
+                <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="upload-image"
+                />
+                <label
+                    htmlFor="upload-image"
+                    className="mr-2 cursor-pointer text-2xl focus:outline-none"
+                >
+                    📎
+                </label>
                 <button
                     onClick={toggleEmojiPicker}
                     className="text-2xl focus:outline-none"
@@ -156,6 +185,6 @@ const ChatRoom = ({ room }) => {
             </div>
         </div>
     );
-};
+}
 
-export default ChatRoom;
+export default GroupChatRoom;

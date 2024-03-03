@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import chatService from "../services/chatService";
-import { useAuth } from "./useAuth";
+import { createContext, useContext, useEffect, useState } from 'react';
+import chatService from '../services/chatService';
+import { useAuth } from './useAuth';
 
 const ChatContext = createContext();
 
@@ -12,7 +12,7 @@ export const ChatProvider = ({ children }) => {
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [isSidebarVisible, setSidebarVisibility] = useState(true);
     const { userVerified } = useAuth();
-    console.log("userVerified:", userVerified);
+    console.log('userVerified:', userVerified);
 
     const [currentChatList, setCurrentChatList] = useState([]);
 
@@ -20,9 +20,26 @@ export const ChatProvider = ({ children }) => {
         // Fetch chat list
         const fetchChatList = async () => {
             // Fetch chat list from the server
-            const chatList = await chatService.getAllExistingChats(userVerified._id);
-            console.log("Fetched chat list:", chatList);
-            setCurrentChatList(chatList);
+            const chatList = await chatService.getAllExistingChats(
+                userVerified._id,
+            );
+
+            // remove duplicates group chat from the list, if chatList have group and same group._id
+
+            const filteredChat = chatList.filter((chat, index, self) => {
+                if (chat.group) {
+                    return (
+                        index ===
+                        self.findIndex(
+                            (t) => t.group && t.group._id === chat.group._id,
+                        )
+                    );
+                }
+
+                return true;
+            });
+
+            setCurrentChatList(filteredChat);
         };
 
         if (userVerified) {
