@@ -25,7 +25,6 @@ export const ChatProvider = ({ children }) => {
             );
 
             // remove duplicates group chat from the list, if chatList have group and same group._id
-
             const filteredChat = chatList.filter((chat, index, self) => {
                 if (chat.group) {
                     return (
@@ -38,6 +37,8 @@ export const ChatProvider = ({ children }) => {
 
                 return true;
             });
+
+            console.log('Filtered chat:', filteredChat);
 
             setCurrentChatList(filteredChat);
         };

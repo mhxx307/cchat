@@ -2,11 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-
 .opt-container {
-  @apply flex justify-between gap-2;
+    @apply flex justify-between gap-2;
 }
 
 .opt-container input {
-  @apply !mr-0 flex-1 py-5 outline-none;
+    @apply !mr-0 flex-1 py-5 outline-none;
+}
+
+/* custom scrollbar */
+/* width */
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
 }

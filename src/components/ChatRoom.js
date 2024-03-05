@@ -55,28 +55,15 @@ const ChatRoom = ({ room }) => {
 
     const handleSendMessage = async () => {
         if (newMessage.trim() === '') return;
-        await chatService.start1v1Chat({
+        const chat = await chatService.start1v1Chat({
             senderId: userVerified._id,
             receiverId: room.receiver._id,
             message: newMessage,
         });
-        setMessages((prevMessages) => [
-            ...prevMessages,
-            {
-                sender: userVerified,
-                receiver: room.receiver,
-                message: newMessage,
-                timestamp: new Date().toISOString(),
-            },
-        ]);
+        setMessages((prevMessages) => [...prevMessages, chat]);
 
         // Emit a message event to the server
-        socket.emit('message', {
-            sender: userVerified,
-            receiver: room.receiver,
-            message: newMessage,
-            timestamp: new Date().toISOString(),
-        });
+        socket.emit('message', chat);
 
         setNewMessage('');
     };

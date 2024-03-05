@@ -3,7 +3,6 @@ import { MdOutlineGroupAdd } from 'react-icons/md';
 import { FaCamera } from 'react-icons/fa';
 import 'react-responsive-modal/styles.css';
 import { Modal } from 'react-responsive-modal';
-import { debounce } from 'lodash';
 import { toast } from 'react-toastify';
 
 import ChatRoom from '../components/ChatRoom';
@@ -14,6 +13,7 @@ import { useAuth } from '../hooks/useAuth';
 import socket from '../configs/socket';
 import FallbackAvatar from '../components/FallbackAvatar';
 import GroupChatRoom from '../components/GroupChatRoom';
+import useDebounce from '../hooks/useDebounce';
 
 function ChatPage() {
     const { selectedRoom, isSidebarVisible } = useChat();
@@ -66,12 +66,14 @@ const Sidebar = () => {
     const [open, setOpen] = useState(false);
     const onOpenModal = () => setOpen(true);
     const onCloseModal = () => setOpen(false);
+    const searchTermUserDebounce = useDebounce(searchTermUser, 500);
 
     console.log('Current Chat List:', currentChatList);
 
     useEffect(() => {
         // listen for new chat
         socket.on('newChat', (data) => {
+            console.log('New Chat:', data);
             // get all existing chats
             chatService
                 .getAllExistingChats(userVerified._id)
@@ -88,12 +90,31 @@ const Sidebar = () => {
     }, [socket]);
 
     useEffect(() => {
+        socket.on('newChatGroup', (data) => {
+            console.log('New Group Chat:', data);
+            // get all existing chats
+            chatService
+                .getAllExistingChats(userVerified._id)
+                .then((chatList) => {
+                    setCurrentChatList(chatList);
+                });
+        });
+
+        return () => {
+            // Clean up
+            socket.off('newChatGroup');
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket]);
+
+    useEffect(() => {
         // Fetch users when searchTermUser changes
         const fetchUsers = async () => {
-            if (searchTermUser.trim() !== '') {
+            if (searchTermUserDebounce.trim() !== '') {
                 try {
-                    const result =
-                        await userService.getUsersBySearchTerms(searchTermUser);
+                    const result = await userService.getUsersBySearchTerms(
+                        searchTermUserDebounce,
+                    );
                     console.log('Fetched users:', result);
                     // Remove the current user from the search results
                     const filteredResult = result.filter(
@@ -109,13 +130,16 @@ const Sidebar = () => {
         };
 
         fetchUsers();
-    }, [searchTermUser, userVerified._id]);
+    }, [searchTermUserDebounce, userVerified._id]);
 
     const handleUserSelect = async (user) => {
         // Handle selecting a user, for example, start a new chat with the selected user
         console.log('Selected user:', user);
         // check if a chat already exists
-        const existingChat = currentChatList.find(
+        const currentChatListWithoutGroups = currentChatList.filter(
+            (chat) => !chat.group,
+        );
+        const existingChat = currentChatListWithoutGroups.find(
             (chat) =>
                 chat.sender._id === user._id || chat.receiver._id === user._id,
         );
@@ -166,14 +190,9 @@ const Sidebar = () => {
         onOpenModal();
     };
 
-    //    debounce function
-    const delayedSearch = debounce((searchTerm) => {
-        setSearchTermUser(searchTerm);
-    }, 500);
-
     const handleSearchChange = (e) => {
         const term = e.target.value;
-        delayedSearch(term);
+        setSearchTermUser(term);
     };
 
     return (
@@ -210,11 +229,12 @@ const Sidebar = () => {
                         />
                     </Modal>
                 </div>
-                <ul>
+                <ul className="">
                     {searchResults.map((user, index) => (
                         <li
                             key={user._id}
                             onClick={() => handleUserSelect(user)}
+                            className="flex cursor-pointer items-center justify-between px-4 py-2 hover:bg-gray-700"
                         >
                             {user.username}
                         </li>
@@ -223,7 +243,7 @@ const Sidebar = () => {
             </div>
 
             <h2 className="mb-4 text-2xl font-semibold">Chat Rooms</h2>
-            <ul>
+            <ul className="h-[60%] overflow-y-auto">
                 {currentChatList.length > 0 ? (
                     currentChatList.map((room) => (
                         <li
@@ -285,9 +305,19 @@ const Sidebar = () => {
                                     <span className="ml-2">
                                         {userVerified._id === room.sender._id
                                             ? room.receiver
-                                                ? room.receiver.username
-                                                : room.group.name
-                                            : room.sender.username}
+                                                ? room.receiver.username.substring(
+                                                      0,
+                                                      10,
+                                                  )
+                                                : room.group.name.substring(
+                                                      0,
+                                                      10,
+                                                  )
+                                            : room.sender.username.substring(
+                                                  0,
+                                                  10,
+                                              )}
+                                        ...
                                     </span>
                                 </div>
                             )}
@@ -310,14 +340,18 @@ const AddGroupModal = ({ onCloseModal, userVerified }) => {
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [userSearchResults, setUserSearchResults] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const { setCurrentChatList } = useChat();
+    const searchTermDebounce = useDebounce(searchTerm, 500);
 
     // Function to fetch users based on search term
     useEffect(() => {
         const fetchUsers = async () => {
-            if (searchTerm.trim() !== '') {
+            if (searchTermDebounce.trim() !== '') {
                 try {
                     const result =
-                        await userService.getUsersBySearchTerms(searchTerm);
+                        await userService.getUsersBySearchTerms(
+                            searchTermDebounce,
+                        );
                     // Remove the current user from the search results
                     const filteredResult = result.filter(
                         (user) => user._id !== userVerified._id,
@@ -331,7 +365,7 @@ const AddGroupModal = ({ onCloseModal, userVerified }) => {
             }
         };
         fetchUsers();
-    }, [searchTerm, userVerified._id]);
+    }, [searchTermDebounce, userVerified._id]);
 
     // Function to handle changes in group name
     const handleGroupNameChange = (e) => {
@@ -362,10 +396,6 @@ const AddGroupModal = ({ onCloseModal, userVerified }) => {
     // Function to handle create group
     const handleCreateGroup = async () => {
         try {
-            console.log('Group Name:', groupName);
-            console.log('Group Image:', groupImage);
-            console.log('Selected Users:', selectedUsers);
-
             // members = array of userIds of selected users + current user
             const selectedUserIdList = selectedUsers.map((user) => user._id);
             const members = [userVerified._id, ...selectedUserIdList];
@@ -376,13 +406,12 @@ const AddGroupModal = ({ onCloseModal, userVerified }) => {
             });
 
             console.log('Created Group:', result);
+            console.log('Group Image:', groupImage);
+
+            // update current chat list
 
             // real-time update
-            socket.emit('newChat', {
-                sender: selectedUsers,
-                receiver: selectedUsers,
-                message: 'Welcome to the group!',
-            });
+            socket.emit('messageChatGroup', result);
         } catch (error) {
             console.error('Error creating group:', error);
             toast.error('Error creating group');
@@ -393,6 +422,11 @@ const AddGroupModal = ({ onCloseModal, userVerified }) => {
             setSelectedUsers([]);
             setUserSearchResults([]);
             setSearchTerm('');
+            // fetch chat list
+            const chatList = await chatService.getAllExistingChats(
+                userVerified._id,
+            );
+            setCurrentChatList(chatList);
             toast.success('Group created successfully');
             onCloseModal(); // Close the modal after group creation
         }

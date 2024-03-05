@@ -36,7 +36,8 @@ function GroupChatRoom({ selectedRoom }) {
         return () => {
             socket.off('newChatGroup');
         };
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket]);
 
     useEffect(() => {
         scrollToBottom();
@@ -49,26 +50,13 @@ function GroupChatRoom({ selectedRoom }) {
     const handleSendMessage = async () => {
         try {
             if (newMessage.trim() === '') return;
-            await chatService.startGroupChat({
+            const chat = await chatService.startGroupChat({
                 groupId: selectedRoom.group._id,
                 message: newMessage,
                 senderId: userVerified._id,
             });
-            setMessages([
-                ...messages,
-                {
-                    senderId: userVerified._id,
-                    message: newMessage,
-                    timestamp: new Date().toISOString(),
-                },
-            ]);
-            socket.emit('messageChatGroup', {
-                sender: userVerified,
-                group: selectedRoom.group,
-                members: selectedRoom.members,
-                message: newMessage,
-                timestamp: new Date().toISOString(),
-            });
+            setMessages([...messages, chat]);
+            socket.emit('messageChatGroup', chat);
             setNewMessage('');
         } catch (error) {
             console.error('Error sending message:', error);
@@ -84,6 +72,8 @@ function GroupChatRoom({ selectedRoom }) {
         const file = e.target.files[0];
         console.log('Uploaded file:', file);
     };
+
+    console.log('Messages:', messages);
 
     return (
         <div className="chat-room flex h-[80vh] flex-col justify-between rounded-md bg-gray-100 p-4 md:h-full">
