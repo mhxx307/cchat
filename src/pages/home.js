@@ -1,21 +1,22 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
 
 function HomePage() {
     return (
-        <div className="flex justify-center items-center p-8">
-            <div className="bg-white p-8 rounded shadow-md">
-                <h2 className="text-2xl font-semibold mb-6">Welcome to Our Website</h2>
+        <div className="flex items-center justify-center p-8">
+            <div className="rounded bg-white p-8 shadow-md">
+                <h2 className="mb-6 text-2xl font-semibold">
+                    Welcome to Our Website
+                </h2>
                 <div className="flex justify-center space-x-4">
                     <Link
-                        to={"/login"}
-                        className="bg-blue-500 text-white px-4 py-2 rounded focus:outline-none hover:bg-blue-700"
+                        to={'/login'}
+                        className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none"
                     >
                         Login
                     </Link>
                     <Link
-                        to={"/register"}
-                        className="bg-green-500 text-white px-4 py-2 rounded focus:outline-none hover:bg-green-700"
+                        to={'/register'}
+                        className="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-700 focus:outline-none"
                     >
                         Register
                     </Link>

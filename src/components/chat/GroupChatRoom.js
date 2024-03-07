@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import EmojiPicker from 'emoji-picker-react';
-import chatService from '../services/chatService';
-import { useAuth } from '../hooks/useAuth';
-import socket from '../configs/socket';
-import FallbackAvatar from './FallbackAvatar';
+import { useAuth } from '~/hooks/useAuth';
+import chatService from '~/services/chatService';
+import socket from '~/configs/socket';
+import FallbackAvatar from '../shared/FallbackAvatar';
 
 function GroupChatRoom({ selectedRoom }) {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);

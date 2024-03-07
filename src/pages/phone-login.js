@@ -5,8 +5,8 @@ import PhoneInput from 'react-phone-input-2';
 import { toast } from 'react-toastify';
 import { signInWithPhoneNumber, RecaptchaVerifier } from 'firebase/auth';
 import OtpInput from 'react-otp-input';
-import { auth } from '../configs/firebase';
-import authService from '../services/authService';
+import { auth } from '~/configs/firebase';
+import authService from '~/services/authService';
 
 import 'react-phone-input-2/lib/style.css';
 

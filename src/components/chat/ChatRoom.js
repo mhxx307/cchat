@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import EmojiPicker from 'emoji-picker-react';
-import chatService from '../services/chatService';
-import { useAuth } from '../hooks/useAuth';
-import socket from '../configs/socket';
+import { useAuth } from '~/hooks/useAuth';
+import chatService from '~/services/chatService';
+import socket from '~/configs/socket';
 
 const ChatRoom = ({ room }) => {
     const [messages, setMessages] = useState([]);

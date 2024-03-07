@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
+import { useState } from 'react';
 import { BsPencil } from 'react-icons/bs'; // Importing Pencil icon from react-icons
-import userService from '../services/userService';
 import { toast } from 'react-toastify';
-import Loading from '../components/Loading';
+import { Loading } from '~/components/shared';
+import { useAuth } from '~/hooks/useAuth';
+import userService from '~/services/userService';
 
 function Settings() {
     const { userVerified, setUserVerified } = useAuth();
