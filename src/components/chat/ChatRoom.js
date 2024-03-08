@@ -3,24 +3,26 @@ import EmojiPicker from 'emoji-picker-react';
 import { useAuth } from '~/hooks/useAuth';
 import chatService from '~/services/chatService';
 import socket from '~/configs/socket';
+import { useChat } from '~/hooks/useChat';
 
-const ChatRoom = ({ room }) => {
+const ChatRoom = () => {
+    const { selectedRoom } = useChat();
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const { userVerified } = useAuth();
     const messagesEndRef = useRef(null);
 
-    console.log('selected room:', room);
+    console.log('selected room:', selectedRoom);
 
     useEffect(() => {
         // Fetch messages when room changes
         const fetchMessages = async () => {
-            if (room) {
+            if (selectedRoom) {
                 // Fetch messages from the server
                 const messages = await chatService.getChatMessages({
-                    senderId: room.sender._id,
-                    receiverId: room.receiver._id,
+                    senderId: selectedRoom.sender._id,
+                    receiverId: selectedRoom.receiver._id,
                 });
                 console.log('Fetched messages:', messages);
                 setMessages(messages);
@@ -28,7 +30,7 @@ const ChatRoom = ({ room }) => {
         };
 
         fetchMessages();
-    }, [room]);
+    }, [selectedRoom]);
 
     useEffect(() => {
         // Listen for new messages
@@ -57,7 +59,7 @@ const ChatRoom = ({ room }) => {
         if (newMessage.trim() === '') return;
         const chat = await chatService.start1v1Chat({
             senderId: userVerified._id,
-            receiverId: room.receiver._id,
+            receiverId: selectedRoom.receiver._id,
             message: newMessage,
         });
         setMessages((prevMessages) => [...prevMessages, chat]);

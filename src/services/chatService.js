@@ -36,10 +36,11 @@ const chatService = {
         );
         return result;
     },
-    updateGroup: async ({ groupId, name, members }) => {
+    updateGroup: async ({ groupId, name, members, profilePic }) => {
         const result = await httpRequest.put(`/chat/updateGroup/${groupId}`, {
             name,
             members,
+            profilePic,
         });
         return result;
     },

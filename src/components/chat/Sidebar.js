@@ -28,7 +28,7 @@ const Sidebar = () => {
     const onCloseModal = () => setOpen(false);
     const searchTermUserDebounce = useDebounce(searchTermUser, 500);
 
-    console.log('Current Chat List:', currentChatList);
+    // console.log('Current Chat List:', currentChatList);
 
     useEffect(() => {
         // listen for new chat
@@ -51,7 +51,7 @@ const Sidebar = () => {
 
     useEffect(() => {
         socket.on('newChatGroup', (data) => {
-            console.log('New Group Chat:', data);
+            // console.log('New Group Chat:', data);
             // get all existing chats
             chatService
                 .getAllExistingChats(userVerified._id)
@@ -75,7 +75,7 @@ const Sidebar = () => {
                     const result = await userService.getUsersBySearchTerms(
                         searchTermUserDebounce,
                     );
-                    console.log('Fetched users:', result);
+                    // console.log('Fetched users:', result);
                     // Remove the current user from the search results
                     const filteredResult = result.filter(
                         (user) => user._id !== userVerified._id,
@@ -94,7 +94,7 @@ const Sidebar = () => {
 
     const handleUserSelect = async (user) => {
         // Handle selecting a user, for example, start a new chat with the selected user
-        console.log('Selected user:', user);
+        // console.log('Selected user:', user);
         // check if a chat already exists
         const currentChatListWithoutGroups = currentChatList.filter(
             (chat) => !chat.group,
@@ -105,7 +105,7 @@ const Sidebar = () => {
         );
 
         if (existingChat) {
-            console.log('Chat already exists:', existingChat);
+            // console.log('Chat already exists:', existingChat);
             setSelectedRoom(existingChat);
             return;
         } else {
@@ -114,7 +114,7 @@ const Sidebar = () => {
                 receiverId: user._id,
                 message: 'Hello!',
             });
-            console.log('Started 1v1 chat:', chat);
+            // console.log('Started 1v1 chat:', chat);
             // Emit a message event to the server
             socket.emit('message', {
                 sender: userVerified,
