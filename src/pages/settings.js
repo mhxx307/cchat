@@ -4,6 +4,15 @@ import { toast } from 'react-toastify';
 import { Loading } from '~/components/shared';
 import { useAuth } from '~/hooks/useAuth';
 import userService from '~/services/userService';
+import {
+    deleteObject,
+    getDownloadURL,
+    ref,
+    uploadBytes,
+} from 'firebase/storage';
+import { storage } from '~/configs/firebase';
+import { v4 } from 'uuid';
+import { createAttachmentUrl } from '~/utils/index';
 
 function Settings() {
     const { userVerified, setUserVerified } = useAuth();
@@ -13,6 +22,7 @@ function Settings() {
         userVerified.profilePic || '',
     );
     const [loading, setLoading] = useState(false);
+    const [uploadLoading, setUploadLoading] = useState(false);
 
     const handleUsernameChange = (e) => {
         setUsername(e.target.value);
@@ -37,7 +47,44 @@ function Settings() {
     };
 
     const handleSaveAvatar = async () => {
-        // Implement logic to save avatar
+        if (avatar) {
+            try {
+                setUploadLoading(true);
+                if (avatar === undefined || avatar === null) return;
+                const imageRef = ref(
+                    storage,
+                    `profiles/${avatar?.name + v4()}`,
+                );
+
+                if (userVerified.profilePic) {
+                    const oldImageRef = ref(
+                        storage,
+                        createAttachmentUrl(
+                            userVerified.profilePic,
+                            'profiles',
+                        ),
+                    );
+                    await deleteObject(oldImageRef);
+                }
+
+                const response = await uploadBytes(imageRef, avatar);
+                const url = await getDownloadURL(response.ref);
+
+                await userService.updateUserById(userVerified._id, {
+                    profilePic: url,
+                    username,
+                    email: userVerified.email,
+                });
+                setAvatar(null);
+                setAvatarPreview(url);
+                toast.success('Avatar uploaded successfully');
+            } catch (error) {
+                console.error('Error uploading avatar:', error);
+                toast.error('Error uploading avatar');
+            } finally {
+                setUploadLoading(false);
+            }
+        }
     };
 
     const handleSaveChanges = async (e) => {
@@ -66,21 +113,21 @@ function Settings() {
 
     return (
         <div className="mx-auto mt-8 max-w-md rounded-lg bg-white p-6 shadow-md">
-            <h1 className="mb-6 text-3xl font-semibold">Profile</h1>
-
+            <h1 className="mb-6 text-3xl font-semibold"> Profile </h1>{' '}
             <div className="mb-4">
                 <label
                     className="mb-2 block text-sm font-medium text-gray-700"
                     htmlFor="avatar"
                 >
-                    Avatar
-                </label>
+                    Avatar{' '}
+                </label>{' '}
                 <div className={'flex'}>
                     <label
                         htmlFor="avatar"
                         className="relative h-24 w-24 cursor-pointer overflow-hidden rounded-full bg-gray-300 transition duration-300 hover:bg-gray-400"
                     >
                         <div className="flex items-center">
+                            {' '}
                             {avatarPreview ? (
                                 <img
                                     src={avatarPreview}
@@ -94,9 +141,8 @@ function Settings() {
                                     alt="Avatar Preview"
                                     className="mr-2 h-full w-full"
                                 />
-                            )}
-                        </div>
-
+                            )}{' '}
+                        </div>{' '}
                         <input
                             id="avatar"
                             type="file"
@@ -104,7 +150,6 @@ function Settings() {
                             onChange={handleAvatarChange}
                             className="hidden"
                         />
-
                         <div className="absolute left-0 top-0 flex h-full w-full items-center justify-center rounded-lg bg-gray-200 opacity-0 transition duration-300 hover:opacity-50">
                             <button
                                 type="button"
@@ -120,20 +165,19 @@ function Settings() {
                                     size={20}
                                     title="Edit Avatar"
                                 />
-                            </button>
-                        </div>
-                    </label>
-
-                    {/* save & cancel */}
+                            </button>{' '}
+                        </div>{' '}
+                    </label>{' '}
+                    {/* save & cancel */}{' '}
                     {avatar && (
                         <div className="mt-2 flex items-center justify-center">
                             <button
                                 onClick={handleSaveAvatar}
+                                disabled={uploadLoading}
                                 className="mx-2 text-xs text-blue-500 hover:underline focus:outline-none"
                             >
-                                Save
-                            </button>
-
+                                {uploadLoading ? <Loading /> : 'Save Avatar'}{' '}
+                            </button>{' '}
                             <button
                                 onClick={() => {
                                     setAvatar(null);
@@ -143,27 +187,26 @@ function Settings() {
                                 }}
                                 className="text-xs text-red-500 hover:underline focus:outline-none"
                             >
-                                Cancel
-                            </button>
+                                Cancel{' '}
+                            </button>{' '}
                         </div>
-                    )}
-                </div>
-
+                    )}{' '}
+                </div>{' '}
                 <p className="mt-2 text-xs text-gray-500">
-                    JPG, JPEG, PNG, GIF. Max size of 2MB
-                </p>
-            </div>
-
+                    JPG, JPEG, PNG, GIF.Max size of 2 MB{' '}
+                </p>{' '}
+            </div>{' '}
             <form onSubmit={handleSaveChanges}>
-                {/* Profile Settings */}
+                {' '}
+                {/* Profile Settings */}{' '}
                 <div className="mb-8">
                     <div className="mb-4">
                         <label
                             className="mb-2 block text-sm font-medium text-gray-700"
                             htmlFor="username"
                         >
-                            Username
-                        </label>
+                            Username{' '}
+                        </label>{' '}
                         <input
                             id="username"
                             type="text"
@@ -172,10 +215,9 @@ function Settings() {
                             className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-blue-500 focus:outline-none"
                             placeholder="Enter your username"
                         />
-                    </div>
-                </div>
-
-                {/* Save Changes Button */}
+                    </div>{' '}
+                </div>{' '}
+                {/* Save Changes Button */}{' '}
                 <button
                     type={loading ? 'button' : 'submit'}
                     className={`w-full rounded-lg bg-blue-500 py-3 font-semibold text-white transition duration-300 hover:bg-blue-600 ${
@@ -187,9 +229,9 @@ function Settings() {
                         <Loading />
                     ) : (
                         'Save Changes'
-                    )}
-                </button>
-            </form>
+                    )}{' '}
+                </button>{' '}
+            </form>{' '}
         </div>
     );
 }
