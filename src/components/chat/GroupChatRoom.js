@@ -1,16 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import EmojiPicker from 'emoji-picker-react';
-import chatService from '../services/chatService';
-import { useAuth } from '../hooks/useAuth';
-import socket from '../configs/socket';
-import FallbackAvatar from './FallbackAvatar';
+import { useAuth } from '~/hooks/useAuth';
+import chatService from '~/services/chatService';
+import socket from '~/configs/socket';
+import FallbackAvatar from '../shared/FallbackAvatar';
+import Modal from 'react-responsive-modal';
+import GroupProfileModal from './GroupProfileModal';
+import AddMembersModal from './AddMembersModal';
+import { useChat } from '~/hooks/useChat';
 
-function GroupChatRoom({ selectedRoom }) {
+function GroupChatRoom() {
+    const { selectedRoom } = useChat();
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const { userVerified } = useAuth();
     const messagesEndRef = useRef(null);
+    const [open, setOpen] = useState(false);
+    const [openAddMembersModal, setOpenAddMembersModal] = useState(false);
+    const onOpenAddMembersModal = () => setOpenAddMembersModal(true);
+    const onCloseAddMembersModal = () => setOpenAddMembersModal(false);
+    const onOpenModal = () => setOpen(true);
+    const onCloseModal = () => setOpen(false);
 
     useEffect(() => {
         const fetchMessages = async () => {
@@ -73,11 +84,62 @@ function GroupChatRoom({ selectedRoom }) {
         console.log('Uploaded file:', file);
     };
 
+    const handleOpenProfileGroupModal = () => {
+        // Open modal to update group chat
+        onOpenModal();
+    };
+
+    const handleOpenAddMembersModal = () => {
+        // Open modal to add members to group chat
+        onOpenAddMembersModal();
+    };
+
     console.log('Messages:', messages);
 
     return (
         <div className="chat-room flex h-[80vh] flex-col justify-between rounded-md bg-gray-100 p-4 md:h-full">
-            <h2 className="mb-4 text-2xl font-semibold">Group Chat Room</h2>
+            <div className="flex items-center justify-between">
+                {/* avatar & name group chat, onClick open modal update group chat */}
+                <div className="flex items-center">
+                    <div
+                        onClick={handleOpenProfileGroupModal}
+                        className="cursor-pointer"
+                    >
+                        {selectedRoom.group.profilePic ? (
+                            <img
+                                src={selectedRoom.group.profilePic}
+                                alt="Avatar"
+                                className="h-8 w-8 rounded-full"
+                            />
+                        ) : (
+                            <FallbackAvatar name={selectedRoom.group.name} />
+                        )}
+                    </div>
+                    <span className="ml-2">{selectedRoom.group.name}</span>
+                </div>
+
+                {/* open add members modal*/}
+                <div
+                    onClick={handleOpenAddMembersModal}
+                    className="cursor-pointer text-xs text-blue-500"
+                >
+                    Add members
+                </div>
+            </div>
+
+            {/* add members modal */}
+            <Modal
+                open={openAddMembersModal}
+                onClose={onCloseAddMembersModal}
+                center
+            >
+                <AddMembersModal selectedRoom={selectedRoom} />
+            </Modal>
+
+            <Modal open={open} onClose={onCloseModal} center>
+                <GroupProfileModal />
+            </Modal>
+
             <div className="chat-messages mb-4 max-h-[60vh] flex-1 overflow-y-auto">
                 {messages.length > 0 &&
                     messages.map((message, index) =>

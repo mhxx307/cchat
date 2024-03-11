@@ -1,13 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
-import authService from '../services/authService';
 import { toast } from 'react-toastify';
-import { useAuth } from '../hooks/useAuth';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import InputField from '../components/InputField';
 import { useState } from 'react';
-import Loading from '../components/Loading';
+import { InputField, Loading } from '~/components/shared';
+import { useAuth } from '~/hooks/useAuth';
+import authService from '~/services/authService';
 
 const schema = yup.object({
     email: yup

@@ -3,10 +3,11 @@ import httpRequest from '../configs/http';
 // members: array of userIds
 
 const chatService = {
-    createGroup: async ({ name, members }) => {
+    createGroup: async ({ name, members, senderId }) => {
         const result = await httpRequest.post('/chat/createGroup', {
             name,
             members,
+            senderId,
         });
         // result = { group: { _id, name, members }, chat: { _id, group, message } }
         return result;
@@ -35,10 +36,11 @@ const chatService = {
         );
         return result;
     },
-    updateGroup: async ({ groupId, name, members }) => {
+    updateGroup: async ({ groupId, name, members, profilePic }) => {
         const result = await httpRequest.put(`/chat/updateGroup/${groupId}`, {
             name,
             members,
+            profilePic,
         });
         return result;
     },
