@@ -75,6 +75,7 @@ function Settings() {
                     username,
                     email: userVerified.email,
                 });
+                setUserVerified({ ...userVerified, profilePic: url });
                 setAvatar(null);
                 setAvatarPreview(url);
                 toast.success('Avatar uploaded successfully');
@@ -127,7 +128,6 @@ function Settings() {
                         className="relative h-24 w-24 cursor-pointer overflow-hidden rounded-full bg-gray-300 transition duration-300 hover:bg-gray-400"
                     >
                         <div className="flex items-center">
-                            {' '}
                             {avatarPreview ? (
                                 <img
                                     src={avatarPreview}
@@ -135,14 +135,13 @@ function Settings() {
                                     className="mr-2 h-full w-full"
                                 />
                             ) : (
-                                // use dicebear avatars as fallback
                                 <img
                                     src={`https://avatars.dicebear.com/api/avataaars/${username}.svg`}
                                     alt="Avatar Preview"
                                     className="mr-2 h-full w-full"
                                 />
-                            )}{' '}
-                        </div>{' '}
+                            )}
+                        </div>
                         <input
                             id="avatar"
                             type="file"
