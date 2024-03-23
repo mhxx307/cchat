@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import socket from '~/configs/socket';
 import { useAuth } from '~/hooks/useAuth';
+import { useChat } from '~/hooks/useChat';
 import useDebounce from '~/hooks/useDebounce';
+import chatService from '~/services/chatService';
 import userService from '~/services/userService';
 
 const AddMembersModal = () => {
@@ -8,6 +12,7 @@ const AddMembersModal = () => {
     const [searchTermUser, setSearchTermUser] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [selectedMembers, setSelectedMembers] = useState([]);
+    const { selectedRoom } = useChat();
     const searchTermUserDebounce = useDebounce(searchTermUser, 500);
 
     useEffect(() => {
@@ -22,7 +27,14 @@ const AddMembersModal = () => {
                     const filteredResult = result.filter(
                         (user) => user._id !== userVerified._id,
                     );
-                    setSearchResults(filteredResult);
+
+                    //remove the users that are already in the group
+                    const members = selectedRoom.group.members;
+                    const filteredResult2 = filteredResult.filter(
+                        (user) => !members.includes(user._id),
+                    );
+
+                    setSearchResults(filteredResult2);
                 } catch (error) {
                     console.error('Error fetching users:', error);
                 }
@@ -32,7 +44,7 @@ const AddMembersModal = () => {
         };
 
         fetchUsers();
-    }, [searchTermUserDebounce, userVerified._id]);
+    }, [searchTermUserDebounce, userVerified._id, selectedRoom.group.members]);
 
     const handleAddMember = (member) => {
         setSelectedMembers([...selectedMembers, member]);
@@ -44,6 +56,39 @@ const AddMembersModal = () => {
         setSelectedMembers(
             selectedMembers.filter((selected) => selected.id !== member.id),
         );
+    };
+
+    const handleSaveMembers = async () => {
+        const newMembers = [
+            ...selectedRoom.group.members,
+            ...selectedMembers.map((member) => member._id),
+        ];
+        console.log(selectedMembers);
+        console.log('members', newMembers);
+
+        try {
+            await chatService.updateGroup({
+                groupId: selectedRoom.group._id,
+                name: selectedRoom.group.name,
+                members: newMembers,
+                profilePic: selectedRoom.group.profilePic,
+            });
+
+            // real-time update
+            socket.emit('updatedGroup', {
+                groupId: selectedRoom.group._id,
+                name: selectedRoom.group.name,
+                members: newMembers,
+                profilePic: selectedRoom.group.profilePic,
+            });
+        } catch (error) {
+            console.error('Error updating group:', error);
+            toast.error('Error adding members');
+        } finally {
+            // Clear the selected members
+            setSelectedMembers([]);
+            toast.success('Members added successfully');
+        }
     };
 
     return (
@@ -87,7 +132,7 @@ const AddMembersModal = () => {
                 </div>
                 <button
                     className="w-full rounded-lg bg-blue-500 px-4 py-2 text-white"
-                    onClick={() => console.log(selectedMembers)}
+                    onClick={() => handleSaveMembers()}
                 >
                     Add Members
                 </button>
