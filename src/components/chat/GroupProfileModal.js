@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import FallbackAvatar from '../shared/FallbackAvatar';
 import { useAuth } from '~/hooks/useAuth';
 import chatService from '~/services/chatService';
@@ -16,52 +16,6 @@ function GroupProfileModal() {
     const [loading, setLoading] = useState(false);
 
     console.log('selectedRoom', selectedRoom);
-
-    useEffect(() => {
-        socket.on('removeGroup', (groupId) => {
-            if (selectedRoom.group._id === groupId) {
-                setSelectedRoom(null);
-                setCurrentChatList((prevList) =>
-                    prevList.filter((chat) => chat._id !== selectedRoom._id),
-                );
-                toast.error('Group has been removed');
-            }
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedRoom, setSelectedRoom, setCurrentChatList, socket]);
-
-    useEffect(() => {
-        socket.on('updatedGroup', (data) => {
-            if (selectedRoom.group._id === data.groupId) {
-                setSelectedRoom((prevRoom) => ({
-                    ...prevRoom,
-                    group: {
-                        ...prevRoom.group,
-                        name: data.name,
-                        profilePic: data.profilePic,
-                    },
-                    members: data.members,
-                }));
-                setCurrentChatList((prevList) => {
-                    const index = prevList.findIndex(
-                        (chat) => chat._id === selectedRoom._id,
-                    );
-                    const updatedChat = {
-                        ...prevList[index],
-                        group: {
-                            ...prevList[index].group,
-                            name: data.name,
-                            profilePic: data.profilePic,
-                        },
-                    };
-                    prevList.splice(index, 1, updatedChat);
-                    return prevList;
-                });
-                toast.success('Group profile updated');
-            }
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedRoom, setSelectedRoom, setCurrentChatList, socket]);
 
     const handleSave = async () => {
         setLoading(true);
@@ -85,8 +39,9 @@ function GroupProfileModal() {
                     ...prevRoom.group,
                     name: groupName,
                     profilePic: selectedRoom.group.profilePic,
+                    members: members,
                 },
-                members,
+                members: members,
             }));
             setCurrentChatList((prevList) => {
                 const index = prevList.findIndex(
@@ -98,6 +53,7 @@ function GroupProfileModal() {
                         ...prevList[index].group,
                         name: groupName,
                         profilePic: selectedRoom.group.profilePic,
+                        members: members,
                     },
                 };
                 prevList.splice(index, 1, updatedChat);
@@ -106,11 +62,8 @@ function GroupProfileModal() {
             toast.success('Group profile updated successfully');
 
             // REAL-TIME UPDATE
-            socket.emit('updateGroup', {
-                groupId: selectedRoom.group._id,
-                name: groupName,
-                members,
-                profilePic: selectedRoom.group.profilePic,
+            socket.emit('addMembers', {
+                message: `${userVerified.username} updated the group profile`,
             });
         }
     };
@@ -151,9 +104,9 @@ function GroupProfileModal() {
                 prevList.filter((chat) => chat._id !== selectedRoom._id),
             );
             toast.success('Group removed successfully');
-            // REAL-TIME UPDATE
 
-            socket.emit('removeGroup', selectedRoom.group._id);
+            // REAL-TIME UPDATE
+            socket.emit('leaveGroup', selectedRoom.group._id);
         }
     };
 

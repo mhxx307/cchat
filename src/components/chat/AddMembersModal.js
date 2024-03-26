@@ -12,7 +12,7 @@ const AddMembersModal = () => {
     const [searchTermUser, setSearchTermUser] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [selectedMembers, setSelectedMembers] = useState([]);
-    const { selectedRoom } = useChat();
+    const { selectedRoom, setSelectedRoom } = useChat();
     const searchTermUserDebounce = useDebounce(searchTermUser, 500);
 
     useEffect(() => {
@@ -59,10 +59,11 @@ const AddMembersModal = () => {
     };
 
     const handleSaveMembers = async () => {
-        const newMembers = [
+        const newMembersId = [
             ...selectedRoom.group.members,
             ...selectedMembers.map((member) => member._id),
         ];
+        const newMembers = [...selectedRoom.group.members, ...selectedMembers];
         console.log(selectedMembers);
         console.log('members', newMembers);
 
@@ -70,16 +71,25 @@ const AddMembersModal = () => {
             await chatService.updateGroup({
                 groupId: selectedRoom.group._id,
                 name: selectedRoom.group.name,
-                members: newMembers,
+                members: newMembersId,
                 profilePic: selectedRoom.group.profilePic,
             });
 
-            // real-time update
-            socket.emit('updatedGroup', {
-                groupId: selectedRoom.group._id,
-                name: selectedRoom.group.name,
+            // Update the selected room with the new members
+            setSelectedRoom((prevRoom) => ({
+                ...prevRoom,
+                group: {
+                    ...prevRoom.group,
+                    members: newMembers,
+                },
                 members: newMembers,
-                profilePic: selectedRoom.group.profilePic,
+            }));
+
+            // real-time update
+            socket.emit('addMembers', {
+                message: `
+                ${userVerified.username} added new members to the group"
+            `,
             });
         } catch (error) {
             console.error('Error updating group:', error);

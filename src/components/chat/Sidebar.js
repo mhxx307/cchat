@@ -2,6 +2,8 @@ import 'react-responsive-modal/styles.css';
 import { useEffect, useState } from 'react';
 import { MdOutlineGroupAdd } from 'react-icons/md';
 import Modal from 'react-responsive-modal';
+import { toast } from 'react-toastify';
+
 import AddGroupModal from './AddGroupModal';
 import { useAuth } from '~/hooks/useAuth';
 import { useChat } from '~/hooks/useChat';
@@ -30,8 +32,8 @@ const Sidebar = () => {
 
     // console.log('Current Chat List:', currentChatList);
 
+    // listen for new chat
     useEffect(() => {
-        // listen for new chat
         socket.on('newChat', (data) => {
             console.log('New Chat:', data);
             // get all existing chats
@@ -49,6 +51,7 @@ const Sidebar = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket]);
 
+    // listen for new group chat
     useEffect(() => {
         socket.on('newChatGroup', (data) => {
             // console.log('New Group Chat:', data);
@@ -61,8 +64,46 @@ const Sidebar = () => {
         });
 
         return () => {
-            // Clean up
             socket.off('newChatGroup');
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket]);
+
+    // listen for remove group
+    useEffect(() => {
+        socket.on('removeGroup', (data) => {
+            // get all existing chats
+            chatService
+                .getAllExistingChats(userVerified._id)
+                .then((chatList) => {
+                    setCurrentChatList(chatList);
+                    toast.error('You have been removed from the group');
+                });
+        });
+
+        return () => {
+            socket.off('removeGroup');
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket]);
+
+    // listen for new members added or members removed
+    useEffect(() => {
+        socket.on('updateMembers', (data) => {
+            console.log('New members added:', data);
+            // get all existing chats
+            chatService
+                .getAllExistingChats(userVerified._id)
+                .then((chatList) => {
+                    setCurrentChatList(chatList);
+                    toast.success(
+                        data.message || 'New members added successfully',
+                    );
+                });
+        });
+
+        return () => {
+            socket.off('updateMembers');
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket]);

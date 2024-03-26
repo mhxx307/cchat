@@ -12,8 +12,6 @@ export const ChatProvider = ({ children }) => {
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [isSidebarVisible, setSidebarVisibility] = useState(true);
     const { userVerified } = useAuth();
-    console.log('userVerified:', userVerified);
-
     const [currentChatList, setCurrentChatList] = useState([]);
 
     useEffect(() => {
