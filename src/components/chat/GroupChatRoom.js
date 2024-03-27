@@ -38,9 +38,9 @@ function GroupChatRoom() {
         fetchMessages();
     }, [selectedRoom]);
 
+    // Listen for new chat messages
     useEffect(() => {
         socket.on('newChatGroup', (data) => {
-            console.log('Received new chat:', data);
             setMessages((prevMessages) => [...prevMessages, data]);
         });
 

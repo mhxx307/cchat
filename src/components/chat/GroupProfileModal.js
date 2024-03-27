@@ -5,6 +5,7 @@ import chatService from '~/services/chatService';
 import { toast } from 'react-toastify';
 import Loading from '../shared/Loading';
 import { useChat } from '~/hooks/useChat';
+import socket from '~/configs/socket';
 
 function GroupProfileModal() {
     const { userVerified } = useAuth();
@@ -38,8 +39,9 @@ function GroupProfileModal() {
                     ...prevRoom.group,
                     name: groupName,
                     profilePic: selectedRoom.group.profilePic,
+                    members: members,
                 },
-                members,
+                members: members,
             }));
             setCurrentChatList((prevList) => {
                 const index = prevList.findIndex(
@@ -51,13 +53,18 @@ function GroupProfileModal() {
                         ...prevList[index].group,
                         name: groupName,
                         profilePic: selectedRoom.group.profilePic,
+                        members: members,
                     },
                 };
                 prevList.splice(index, 1, updatedChat);
                 return prevList;
             });
             toast.success('Group profile updated successfully');
+
             // REAL-TIME UPDATE
+            socket.emit('addMembers', {
+                message: `${userVerified.username} updated the group profile`,
+            });
         }
     };
 
@@ -79,6 +86,28 @@ function GroupProfileModal() {
         // Handle image selection
         const file = event.target.files[0];
         setImage(file);
+    };
+
+    const handleRemoveGroup = async () => {
+        setLoading(true);
+        try {
+            // Implement logic to remove the group
+            // You can use APIs or other methods to perform this action
+            // After removing the group, you can handle the UI or redirect the user accordingly
+            await chatService.deleteGroup(selectedRoom.group._id);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+            setSelectedRoom(null);
+            setCurrentChatList((prevList) =>
+                prevList.filter((chat) => chat._id !== selectedRoom._id),
+            );
+            toast.success('Group removed successfully');
+
+            // REAL-TIME UPDATE
+            socket.emit('leaveGroup', selectedRoom.group._id);
+        }
     };
 
     return (
@@ -142,16 +171,17 @@ function GroupProfileModal() {
                                 ) : (
                                     <FallbackAvatar name={member.username} />
                                 )}
-                                <span>{member.username}</span>
+                                <span className="ml-2">{member.username}</span>
                             </div>
-                            {userVerified._id === selectedRoom.group.admin && (
-                                <button
-                                    className="text-red-500 hover:text-red-700"
-                                    onClick={() => removeMember(member._id)}
-                                >
-                                    Remove
-                                </button>
-                            )}
+                            {userVerified._id === selectedRoom.group.admin &&
+                                userVerified._id !== member._id && (
+                                    <button
+                                        className="text-red-500 hover:text-red-700"
+                                        onClick={() => removeMember(member._id)}
+                                    >
+                                        Remove
+                                    </button>
+                                )}
                         </li>
                     ))}
                 </ul>
@@ -160,9 +190,7 @@ function GroupProfileModal() {
                 {userVerified._id === selectedRoom.group.admin ? (
                     <button
                         className="focus:shadow-outline rounded bg-red-500 px-4 py-2 font-bold text-white hover:bg-red-700 focus:outline-none"
-                        onClick={() =>
-                            console.log('Implement logic to remove group')
-                        }
+                        onClick={handleRemoveGroup}
                     >
                         Remove Group
                     </button>

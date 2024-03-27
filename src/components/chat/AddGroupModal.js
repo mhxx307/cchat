@@ -85,6 +85,7 @@ const AddGroupModal = ({ onCloseModal, userVerified }) => {
             console.log('Group Image:', groupImage);
 
             // update current chat list
+            setCurrentChatList((prevList) => [...prevList, result]);
 
             // real-time update
             socket.emit('messageChatGroup', result);
