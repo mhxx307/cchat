@@ -26,6 +26,36 @@ const userService = {
         });
         return result;
     },
+    sendFriendRequest: async ({ senderId, receiverId }) => {
+        const result = await httpRequest.post(`/users/sendFriendRequest`, {
+            senderId,
+            receiverId,
+        });
+        return result;
+    },
+    acceptFriendRequest: async ({ userId, requesterId }) => {
+        const result = await httpRequest.post(`/users/acceptFriendRequest`, {
+            userId,
+            requesterId,
+        });
+        return result;
+    },
+    getFriendList: async (userId) => {
+        const result = await httpRequest.get(`/users/getFriendList/${userId}`);
+        return result;
+    },
+    getFriendRequestList: async (userId) => {
+        const result = await httpRequest.get(
+            `/users/getFriendRequestList/${userId}`,
+        );
+        return result;
+    },
+    getFriendRequestsReceived: async (userId) => {
+        const result = await httpRequest.get(
+            `/users/getFriendRequestsReceived/${userId}`,
+        );
+        return result;
+    },
 };
 
 export default userService;

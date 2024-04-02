@@ -9,7 +9,7 @@ import socket from '~/configs/socket';
 
 function GroupProfileModal() {
     const { userVerified } = useAuth();
-    const { selectedRoom, setSelectedRoom, setCurrentChatList } = useChat();
+    const { selectedRoom, setSelectedRoom, setRoomList } = useChat();
     const [groupName, setGroupName] = useState(selectedRoom.group.name);
     const [members, setMembers] = useState(selectedRoom.members);
     const [image, setImage] = useState(null);
@@ -43,7 +43,7 @@ function GroupProfileModal() {
                 },
                 members: members,
             }));
-            setCurrentChatList((prevList) => {
+            setRoomList((prevList) => {
                 const index = prevList.findIndex(
                     (chat) => chat._id === selectedRoom._id,
                 );
@@ -100,7 +100,7 @@ function GroupProfileModal() {
         } finally {
             setLoading(false);
             setSelectedRoom(null);
-            setCurrentChatList((prevList) =>
+            setRoomList((prevList) =>
                 prevList.filter((chat) => chat._id !== selectedRoom._id),
             );
             toast.success('Group removed successfully');
