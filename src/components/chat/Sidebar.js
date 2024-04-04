@@ -31,7 +31,7 @@ const Sidebar = () => {
     const onCloseModal = () => setOpen(false);
     const searchTermUserDebounce = useDebounce(searchTermUser, 500);
 
-    console.log('Current chat list:', roomList);
+    // console.log('Current chat list:', roomList);
 
     // Fetch users when searchTermUser changes
     useEffect(() => {
@@ -140,7 +140,6 @@ const Sidebar = () => {
     };
 
     const handleOpenAddGroupModal = () => {
-        // Open the modal to add a new group
         onOpenModal();
     };
 

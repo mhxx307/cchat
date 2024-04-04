@@ -91,6 +91,7 @@ const AddGroupModal = ({ onCloseModal, userVerified }) => {
                     type: 'group',
                     name: groupName || 'New Group',
                     image: groupImage,
+                    adminId: userVerified._id,
                 });
 
                 setRoomList((prev) => [...prev, response]);

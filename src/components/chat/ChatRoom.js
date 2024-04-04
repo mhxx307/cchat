@@ -5,6 +5,8 @@ import chatService from '~/services/chatService';
 import socket from '~/configs/socket';
 import { useChat } from '~/hooks/useChat';
 import MessageItem from './MessageItem';
+import GroupProfileModal from './GroupProfileModal';
+import Modal from 'react-responsive-modal';
 
 const ChatRoom = () => {
     const { selectedRoom, fetchUpdatedRooms } = useChat();
@@ -13,10 +15,13 @@ const ChatRoom = () => {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const { userVerified } = useAuth();
     const [loading, setLoading] = useState(false);
+    const [open, setOpen] = useState(false);
+    const onOpenModal = () => setOpen(true);
+    const onCloseModal = () => setOpen(false);
     const messagesEndRef = useRef(null);
 
     console.log('selected room:', selectedRoom);
-    console.log('messages:', messages);
+    // console.log('messages:', messages);
 
     // fetch messages when selected room changes
     useEffect(() => {
@@ -48,6 +53,10 @@ const ChatRoom = () => {
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket]);
+
+    const handleOpenAddGroupModal = () => {
+        onOpenModal();
+    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -115,16 +124,32 @@ const ChatRoom = () => {
     };
 
     return (
-        <div className="chat-room flex h-[80vh] flex-col justify-between rounded-md bg-gray-100 p-4 md:h-full">
-            <h2 className="mb-4 text-2xl font-semibold">Chatting in</h2>
-            <div className="chat-messages mb-4 max-h-[60vh] flex-1 overflow-y-auto">
+        <div className="flex h-[80vh] flex-col justify-between rounded-md bg-gray-100 px-3 pb-2 md:h-full">
+            <div className="">
+                {selectedRoom.type === '1v1' && (
+                    <h2 className="">Chatting in</h2>
+                )}
+                {selectedRoom.type === 'group' && (
+                    <>
+                        <h3 onClick={handleOpenAddGroupModal}>
+                            {selectedRoom.name}
+                        </h3>
+                        <Modal open={open} onClose={onCloseModal} center>
+                            <GroupProfileModal />
+                        </Modal>
+                    </>
+                )}
+            </div>
+
+            <div className="mb-2 max-h-[60vh] flex-1 overflow-y-auto">
                 {messages.length > 0 &&
                     messages.map((message) => (
                         <MessageItem key={message._id} message={message} />
                     ))}
                 <div ref={messagesEndRef} />
             </div>
-            <div className="chat-input flex items-center">
+
+            <div className="flex items-center">
                 {showEmojiPicker && (
                     <div className="absolute right-[5%] top-[20%] mt-8">
                         <EmojiPicker

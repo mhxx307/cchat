@@ -3,12 +3,13 @@ import httpRequest from '../configs/http';
 // members: array of userIds
 
 const chatService = {
-    createChatRoom: async ({ members, type, name, image }) => {
+    createChatRoom: async ({ members, type, name, image, adminId }) => {
         const response = await httpRequest.post('/chat/createChatRoom', {
             members,
             type,
             name,
             image,
+            admin: adminId,
         });
 
         console.log(response);

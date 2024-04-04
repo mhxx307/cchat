@@ -3,7 +3,7 @@ import FallbackAvatar from '../shared/FallbackAvatar';
 
 function MessageItem({ message }) {
     const { userVerified } = useAuth();
-    console.log('Message:', message);
+    // console.log('Message:', message);
     return (
         <div>
             {message.sender._id === userVerified._id ? (
