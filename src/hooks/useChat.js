@@ -12,33 +12,19 @@ export const ChatProvider = ({ children }) => {
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [isSidebarVisible, setSidebarVisibility] = useState(true);
     const { userVerified } = useAuth();
-    const [currentChatList, setCurrentChatList] = useState([]);
+    const [roomList, setRoomList] = useState([]);
+
+    const fetchUpdatedRooms = async () => {
+        const response = await chatService.getAllRoomByUserId(userVerified._id);
+        setRoomList(response);
+    };
 
     useEffect(() => {
-        // Fetch chat list
         const fetchChatList = async () => {
-            // Fetch chat list from the server
-            const chatList = await chatService.getAllExistingChats(
+            const response = await chatService.getAllRoomByUserId(
                 userVerified._id,
             );
-
-            // remove duplicates group chat from the list, if chatList have group and same group._id
-            const filteredChat = chatList.filter((chat, index, self) => {
-                if (chat.group) {
-                    return (
-                        index ===
-                        self.findIndex(
-                            (t) => t.group && t.group._id === chat.group._id,
-                        )
-                    );
-                }
-
-                return true;
-            });
-
-            console.log('Filtered chat:', filteredChat);
-
-            setCurrentChatList(filteredChat);
+            setRoomList(response);
         };
 
         if (userVerified) {
@@ -53,8 +39,9 @@ export const ChatProvider = ({ children }) => {
                 setSelectedRoom,
                 isSidebarVisible,
                 setSidebarVisibility,
-                currentChatList,
-                setCurrentChatList,
+                roomList,
+                setRoomList,
+                fetchUpdatedRooms,
             }}
         >
             {children}

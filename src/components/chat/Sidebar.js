@@ -9,9 +9,9 @@ import { useAuth } from '~/hooks/useAuth';
 import { useChat } from '~/hooks/useChat';
 import useDebounce from '~/hooks/useDebounce';
 import socket from '~/configs/socket';
-import FallbackAvatar from '../shared/FallbackAvatar';
 import chatService from '~/services/chatService';
 import userService from '~/services/userService';
+import RoomSidebarItem from './RoomSidebarItem';
 
 const Sidebar = () => {
     const { userVerified } = useAuth();
@@ -20,8 +20,9 @@ const Sidebar = () => {
         setSidebarVisibility,
         isSidebarVisible,
         setSelectedRoom,
-        currentChatList,
-        setCurrentChatList,
+        roomList,
+        setRoomList,
+        fetchUpdatedRooms,
     } = useChat();
     const [searchTermUser, setSearchTermUser] = useState('');
     const [searchResults, setSearchResults] = useState([]);
@@ -30,86 +31,10 @@ const Sidebar = () => {
     const onCloseModal = () => setOpen(false);
     const searchTermUserDebounce = useDebounce(searchTermUser, 500);
 
-    // console.log('Current Chat List:', currentChatList);
+    // console.log('Current chat list:', roomList);
 
-    // listen for new chat
+    // Fetch users when searchTermUser changes
     useEffect(() => {
-        socket.on('newChat', (data) => {
-            console.log('New Chat:', data);
-            // get all existing chats
-            chatService
-                .getAllExistingChats(userVerified._id)
-                .then((chatList) => {
-                    setCurrentChatList(chatList);
-                });
-        });
-
-        return () => {
-            // Clean up
-            socket.off('newChat');
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [socket]);
-
-    // listen for new group chat
-    useEffect(() => {
-        socket.on('newChatGroup', (data) => {
-            // console.log('New Group Chat:', data);
-            // get all existing chats
-            chatService
-                .getAllExistingChats(userVerified._id)
-                .then((chatList) => {
-                    setCurrentChatList(chatList);
-                });
-        });
-
-        return () => {
-            socket.off('newChatGroup');
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [socket]);
-
-    // listen for remove group
-    useEffect(() => {
-        socket.on('removeGroup', (data) => {
-            // get all existing chats
-            chatService
-                .getAllExistingChats(userVerified._id)
-                .then((chatList) => {
-                    setCurrentChatList(chatList);
-                    toast.error('You have been removed from the group');
-                });
-        });
-
-        return () => {
-            socket.off('removeGroup');
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [socket]);
-
-    // listen for new members added or members removed
-    useEffect(() => {
-        socket.on('updateMembers', (data) => {
-            console.log('New members added:', data);
-            // get all existing chats
-            chatService
-                .getAllExistingChats(userVerified._id)
-                .then((chatList) => {
-                    setCurrentChatList(chatList);
-                    toast.success(
-                        data.message || 'New members added successfully',
-                    );
-                });
-        });
-
-        return () => {
-            socket.off('updateMembers');
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [socket]);
-
-    useEffect(() => {
-        // Fetch users when searchTermUser changes
         const fetchUsers = async () => {
             if (searchTermUserDebounce.trim() !== '') {
                 try {
@@ -121,6 +46,9 @@ const Sidebar = () => {
                     const filteredResult = result.filter(
                         (user) => user._id !== userVerified._id,
                     );
+
+                    console.log('Filtered users:', filteredResult);
+
                     setSearchResults(filteredResult);
                 } catch (error) {
                     console.error('Error fetching users:', error);
@@ -133,49 +61,74 @@ const Sidebar = () => {
         fetchUsers();
     }, [searchTermUserDebounce, userVerified._id]);
 
-    const handleUserSelect = async (user) => {
-        // Handle selecting a user, for example, start a new chat with the selected user
-        // console.log('Selected user:', user);
-        // check if a chat already exists
-        const currentChatListWithoutGroups = currentChatList.filter(
-            (chat) => !chat.group,
-        );
-        const existingChat = currentChatListWithoutGroups.find(
-            (chat) =>
-                chat.sender._id === user._id || chat.receiver._id === user._id,
-        );
+    // listen for socket events
+    useEffect(() => {
+        socket.on('created-room', (data) => {
+            console.log('Received created room event:', data);
+            setRoomList([...roomList, data.createdRoom]);
+        });
 
-        if (existingChat) {
-            // console.log('Chat already exists:', existingChat);
-            setSelectedRoom(existingChat);
-            return;
-        } else {
-            const chat = await chatService.start1v1Chat({
+        socket.on('sorted-room', (data) => {
+            fetchUpdatedRooms();
+        });
+
+        return () => {
+            socket.off('created-room');
+            socket.off('sorted-room');
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket]);
+
+    const handleUserSelect = async (user) => {
+        try {
+            // Create a chat room with the selected user
+            const members = [userVerified._id, user._id];
+            const response = await chatService.createChatRoom({
+                members,
+                type: '1v1',
+            });
+            console.log('Created chat room:', response);
+
+            // check if the chat room already exists
+            const existingChatroom = roomList.find(
+                (room) => room._id === response._id,
+            );
+
+            if (existingChatroom) {
+                // Set the selected room to the existing chat room
+                setSelectedRoom(existingChatroom);
+                return;
+            } else {
+                // Add the new chat room to the list of chat rooms
+                setRoomList([...roomList, response]);
+                setSelectedRoom(response);
+
+                // Emit a socket event to the server to notify the other user
+                socket.emit('create-room', {
+                    createdRoom: response,
+                });
+            }
+        } catch (error) {
+            console.error('Error creating chat room:', error);
+            toast.error(error);
+        }
+    };
+
+    const handleAddFriend = async (user) => {
+        console.log('Adding friend:', user);
+        try {
+            const response = await userService.sendFriendRequest({
                 senderId: userVerified._id,
                 receiverId: user._id,
-                message: 'Hello!',
             });
-            // console.log('Started 1v1 chat:', chat);
-            // Emit a message event to the server
-            socket.emit('message', {
-                sender: userVerified,
-                receiver: chat.receiver,
-                message: 'Hello!',
-                timestamp: new Date().toISOString(),
-            });
+            console.log('Friend request sent:', response);
+            toast.success('Friend request sent');
 
-            // Fetch chat list
-            setSelectedRoom(chat);
+            socket.emit('send-friend-request', response);
+        } catch (error) {
+            console.error('Error sending friend request:', error);
+            toast.error(error);
         }
-
-        // Clear the search term
-        setSearchTermUser('');
-
-        // fetch chat list
-        const chatList = await chatService.getAllExistingChats(
-            userVerified._id,
-        );
-        setCurrentChatList(chatList);
     };
 
     const handleRoomSelect = (room) => {
@@ -187,13 +140,20 @@ const Sidebar = () => {
     };
 
     const handleOpenAddGroupModal = () => {
-        // Open the modal to add a new group
         onOpenModal();
     };
 
     const handleSearchChange = (e) => {
         const term = e.target.value;
         setSearchTermUser(term);
+    };
+
+    // check if the user is already a friend
+    const isFriend = (user) => {
+        const friend = userVerified.friends.find(
+            (friend) => friend._id === user._id,
+        );
+        return friend;
     };
 
     return (
@@ -231,98 +191,39 @@ const Sidebar = () => {
                     </Modal>
                 </div>
                 <ul className="">
-                    {searchResults.map((user, index) => (
-                        <li
-                            key={user._id}
-                            onClick={() => handleUserSelect(user)}
-                            className="flex cursor-pointer items-center justify-between px-4 py-2 hover:bg-gray-700"
-                        >
-                            {user.username}
-                        </li>
-                    ))}
+                    {searchResults.map((user) =>
+                        isFriend(user) ? (
+                            <li
+                                key={user._id}
+                                onClick={() => handleUserSelect(user)}
+                                className="flex cursor-pointer items-center justify-between px-4 py-2 hover:bg-gray-700"
+                            >
+                                <p> {user.username}</p>
+                            </li>
+                        ) : (
+                            <li
+                                key={user._id}
+                                onClick={() => handleAddFriend(user)}
+                                className="flex cursor-pointer items-center justify-between px-4 py-2 hover:bg-gray-700"
+                            >
+                                <p>{user.username}</p>
+                                <p>+ add friend</p>
+                            </li>
+                        ),
+                    )}
                 </ul>
             </div>
 
             <h2 className="mb-4 text-2xl font-semibold">Chat Rooms</h2>
             <ul className="h-[60%] overflow-y-auto">
-                {currentChatList.length > 0 ? (
-                    currentChatList.map((room) => (
-                        <li
+                {roomList.length > 0 ? (
+                    roomList.map((room) => (
+                        <RoomSidebarItem
                             key={room._id}
-                            className={`mb-2 cursor-pointer rounded px-4 py-2 ${
-                                selectedRoom && selectedRoom._id === room._id
-                                    ? 'bg-blue-600 hover:bg-blue-700'
-                                    : 'hover:bg-gray-700'
-                            }`}
-                            onClick={() => handleRoomSelect(room)}
-                        >
-                            {/* avatar & username */}
-                            {room.group ? (
-                                <div className="flex items-center">
-                                    {room.group.profilePic ? (
-                                        <img
-                                            src={room.group.profilePic}
-                                            alt={room.group.name}
-                                            className="h-10 w-10 rounded-full"
-                                        />
-                                    ) : (
-                                        <FallbackAvatar
-                                            name={room.group.name}
-                                        />
-                                    )}
-                                    <span className="ml-2">
-                                        {room.group.name}
-                                    </span>
-                                </div>
-                            ) : (
-                                <div className="flex items-center">
-                                    {room.profilePic ? (
-                                        <img
-                                            src={
-                                                userVerified._id ===
-                                                room.sender._id
-                                                    ? room.receiver
-                                                        ? room.receiver
-                                                              .profilePic
-                                                        : room.group.profilePic
-                                                    : room.sender.profilePic
-                                            }
-                                            alt={room.username}
-                                            className="h-10 w-10 rounded-full"
-                                        />
-                                    ) : (
-                                        // if not have recever will show group name
-                                        <FallbackAvatar
-                                            name={
-                                                userVerified._id ===
-                                                room.sender._id
-                                                    ? room.receiver
-                                                        ? room.receiver.username
-                                                        : room.group.name
-                                                    : room.sender.username
-                                            }
-                                        />
-                                    )}
-                                    <span className="ml-2">
-                                        {userVerified._id === room.sender._id
-                                            ? room.receiver
-                                                ? room.receiver.username.substring(
-                                                      0,
-                                                      10,
-                                                  )
-                                                : room.group.name.substring(
-                                                      0,
-                                                      10,
-                                                  )
-                                            : room.sender.username.substring(
-                                                  0,
-                                                  10,
-                                              )}
-                                        ...
-                                    </span>
-                                </div>
-                            )}
-                        </li>
+                            room={room}
+                            handleRoomSelect={handleRoomSelect}
+                            selectedRoom={selectedRoom}
+                        />
                     ))
                 ) : (
                     <li className="text-center text-gray-600">

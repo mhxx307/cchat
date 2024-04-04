@@ -3,64 +3,68 @@ import httpRequest from '../configs/http';
 // members: array of userIds
 
 const chatService = {
-    createGroup: async ({ name, members, senderId }) => {
-        const result = await httpRequest.post('/chat/createGroup', {
-            name,
+    createChatRoom: async ({ members, type, name, image, adminId }) => {
+        const response = await httpRequest.post('/chat/createChatRoom', {
             members,
-            senderId,
+            type,
+            name,
+            image,
+            admin: adminId,
         });
-        // result = { group: { _id, name, members }, chat: { _id, group, message } }
-        return result;
+
+        console.log(response);
+
+        return response;
     },
-    start1v1Chat: async ({ senderId, receiverId, message }) => {
-        const result = await httpRequest.post('/chat/start1v1Chat', {
+    getChatroomById: async (chatroomId) => {
+        const response = await httpRequest.get(
+            `/chat/getChatroomById/${chatroomId}`,
+        );
+
+        return response;
+    },
+    getAllMessagesInRoom: async (roomId) => {
+        const response = await httpRequest.get(
+            `/chat/getAllMessagesInRoom/${roomId}`,
+        );
+
+        return response;
+    },
+    getAllRoomByUserId: async (userId) => {
+        const response = await httpRequest.get(
+            `/chat/getAllRoomByUserId/${userId}`,
+        );
+
+        return response;
+    },
+    sendMessage: async ({ senderId, receiverId, content, images, roomId }) => {
+        const response = await httpRequest.post('/chat/sendMessage', {
             senderId,
             receiverId,
-            message,
+            content,
+            images,
+            roomId,
         });
-        return result;
+
+        return response;
     },
-    getAllChatRooms: async (userId) => {
-        const result = await httpRequest.get(`/chat/getAllChatRooms/${userId}`);
-        return result;
-    },
-    getChatMessages: async ({ senderId, receiverId }) => {
-        const result = await httpRequest.get(
-            `/chat/getChatMessages?senderId=${senderId}&receiverId=${receiverId}`,
-        );
-        return result;
-    },
-    getAllExistingChats: async (userId) => {
-        const result = await httpRequest.get(
-            `/chat/getAllExistingChats/${userId}`,
-        );
-        return result;
-    },
-    updateGroup: async ({ groupId, name, members, profilePic }) => {
-        const result = await httpRequest.put(`/chat/updateGroup/${groupId}`, {
-            name,
-            members,
-            profilePic,
-        });
-        return result;
-    },
-    deleteGroup: async (groupId) => {
-        const result = await httpRequest.delete(`/chat/deleteGroup/${groupId}`);
-        return result;
-    },
-    startGroupChat: async ({ groupId, message, senderId }) => {
-        const result = await httpRequest.post('/chat/startGroupChat', {
-            groupId,
-            message,
+    sendMessageToGroup: async ({ senderId, roomId, content, images }) => {
+        const response = await httpRequest.post('/chat/sendMessageToGroup', {
             senderId,
+            roomId,
+            content,
+            images,
         });
-        return result;
+
+        return response;
     },
-    getGroupChatMessages: async ({ groupId }) => {
-        const result = await httpRequest.get(
-            `/chat/getGroupChatMessages/${groupId}`,
-        );
-        return result;
+    inviteToGroupChat: async (userId, chatroomId) => {
+        const response = await httpRequest.post('/chat/inviteToGroupChat', {
+            userId,
+            chatroomId,
+        });
+
+        return response;
     },
 };
 

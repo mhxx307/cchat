@@ -4,115 +4,152 @@ import { useAuth } from '~/hooks/useAuth';
 import chatService from '~/services/chatService';
 import socket from '~/configs/socket';
 import { useChat } from '~/hooks/useChat';
+import MessageItem from './MessageItem';
+import GroupProfileModal from './GroupProfileModal';
+import Modal from 'react-responsive-modal';
 
 const ChatRoom = () => {
-    const { selectedRoom } = useChat();
+    const { selectedRoom, fetchUpdatedRooms } = useChat();
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const { userVerified } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const [open, setOpen] = useState(false);
+    const onOpenModal = () => setOpen(true);
+    const onCloseModal = () => setOpen(false);
     const messagesEndRef = useRef(null);
 
     console.log('selected room:', selectedRoom);
+    // console.log('messages:', messages);
 
+    // fetch messages when selected room changes
     useEffect(() => {
-        // Fetch messages when room changes
         const fetchMessages = async () => {
             if (selectedRoom) {
-                // Fetch messages from the server
-                const messages = await chatService.getChatMessages({
-                    senderId: selectedRoom.sender._id,
-                    receiverId: selectedRoom.receiver._id,
-                });
-                console.log('Fetched messages:', messages);
-                setMessages(messages);
+                const response = await chatService.getAllMessagesInRoom(
+                    selectedRoom._id,
+                );
+                setMessages(response);
             }
         };
-
         fetchMessages();
     }, [selectedRoom]);
-
-    useEffect(() => {
-        // Listen for new messages
-        socket.on('newChat', (data) => {
-            console.log('Received new chat:', data);
-            setMessages((prevMessages) => [...prevMessages, data]);
-        });
-
-        return () => {
-            // Clean up
-            socket.off('newChat');
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [socket]);
 
     // scroll to the bottom of the chat messages
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
 
+    // listen for new messages
+    useEffect(() => {
+        socket.on('receive-message', (data) => {
+            console.log('Received message:', data);
+            setMessages((prevMessages) => [...prevMessages, data.savedMessage]);
+        });
+
+        return () => {
+            socket.off('receive-message');
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket]);
+
+    const handleOpenAddGroupModal = () => {
+        onOpenModal();
+    };
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     const handleSendMessage = async () => {
-        if (newMessage.trim() === '') return;
-        const chat = await chatService.start1v1Chat({
-            senderId: userVerified._id,
-            receiverId: selectedRoom.receiver._id,
-            message: newMessage,
-        });
-        setMessages((prevMessages) => [...prevMessages, chat]);
+        setLoading(true);
+        try {
+            if (newMessage.trim() === '') {
+                return;
+            }
 
-        // Emit a message event to the server
-        socket.emit('message', chat);
+            if (selectedRoom.type === '1v1') {
+                const receiverId = selectedRoom.members.find(
+                    (member) => member._id !== userVerified._id,
+                );
 
-        setNewMessage('');
+                const response = await chatService.sendMessage({
+                    senderId: userVerified._id,
+                    receiverId: receiverId,
+                    content: newMessage,
+                    images: [],
+                    roomId: selectedRoom._id,
+                });
+
+                setMessages([...messages, response]);
+                setNewMessage('');
+
+                socket.emit('send-message', {
+                    savedMessage: response,
+                });
+            } else if (selectedRoom.type === 'group') {
+                const response = await chatService.sendMessage({
+                    senderId: userVerified._id,
+                    content: newMessage,
+                    images: [],
+                    roomId: selectedRoom._id,
+                });
+
+                setMessages([...messages, response]);
+                setNewMessage('');
+
+                socket.emit('send-message', {
+                    savedMessage: response,
+                });
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+        } finally {
+            setLoading(false);
+            fetchUpdatedRooms();
+            socket.emit('sort-room', {
+                userId: userVerified._id,
+            });
+        }
     };
 
     const toggleEmojiPicker = () => {
         setShowEmojiPicker(!showEmojiPicker);
     };
 
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        console.log('file:', file);
+    };
+
     return (
-        <div className="chat-room flex h-[80vh] flex-col justify-between rounded-md bg-gray-100 p-4 md:h-full">
-            <h2 className="mb-4 text-2xl font-semibold">Chatting in</h2>
-            <div className="chat-messages mb-4 max-h-[60vh] flex-1 overflow-y-auto">
+        <div className="flex h-[80vh] flex-col justify-between rounded-md bg-gray-100 px-3 pb-2 md:h-full">
+            <div className="">
+                {selectedRoom.type === '1v1' && (
+                    <h2 className="">Chatting in</h2>
+                )}
+                {selectedRoom.type === 'group' && (
+                    <>
+                        <h3 onClick={handleOpenAddGroupModal}>
+                            {selectedRoom.name}
+                        </h3>
+                        <Modal open={open} onClose={onCloseModal} center>
+                            <GroupProfileModal />
+                        </Modal>
+                    </>
+                )}
+            </div>
+
+            <div className="mb-2 max-h-[60vh] flex-1 overflow-y-auto">
                 {messages.length > 0 &&
-                    messages.map((message, index) =>
-                        message.sender._id === userVerified._id ? (
-                            <div
-                                key={index}
-                                className="mb-4 flex flex-col items-end"
-                            >
-                                <div className="max-w-[60%] rounded-md bg-blue-500 p-2 text-white">
-                                    {message.message}
-                                </div>
-                                <div className="mt-1 text-xs text-gray-500">
-                                    {new Date(
-                                        message.timestamp,
-                                    ).toLocaleString()}
-                                </div>
-                            </div>
-                        ) : (
-                            <div
-                                key={index}
-                                className="mb-4 flex flex-col items-start"
-                            >
-                                <div className="max-w-[60%] rounded-md bg-gray-300 p-2">
-                                    {message.message}
-                                </div>
-                                <div className="mt-1 text-xs text-gray-500">
-                                    {new Date(
-                                        message.timestamp,
-                                    ).toLocaleString()}
-                                </div>
-                            </div>
-                        ),
-                    )}
+                    messages.map((message) => (
+                        <MessageItem key={message._id} message={message} />
+                    ))}
                 <div ref={messagesEndRef} />
             </div>
-            <div className="chat-input flex items-center">
+
+            <div className="flex items-center">
                 {showEmojiPicker && (
                     <div className="absolute right-[5%] top-[20%] mt-8">
                         <EmojiPicker
@@ -130,6 +167,19 @@ const ChatRoom = () => {
                     onChange={(e) => setNewMessage(e.target.value)}
                     className="mr-2 flex-1 rounded-md border p-2 focus:border-blue-500 focus:outline-none"
                 />
+                <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="upload-image"
+                />
+                <label
+                    htmlFor="upload-image"
+                    className="mr-2 cursor-pointer text-2xl focus:outline-none"
+                >
+                    📎
+                </label>
                 <button
                     onClick={toggleEmojiPicker}
                     className="text-2xl focus:outline-none"
@@ -138,9 +188,10 @@ const ChatRoom = () => {
                 </button>
                 <button
                     onClick={handleSendMessage}
+                    disabled={loading}
                     className="focus:shadow-outline rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-600 focus:outline-none"
                 >
-                    Send
+                    {loading ? 'Sending...' : 'Send'}
                 </button>
             </div>
         </div>

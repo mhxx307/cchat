@@ -9,71 +9,18 @@ import socket from '~/configs/socket';
 
 function GroupProfileModal() {
     const { userVerified } = useAuth();
-    const { selectedRoom, setSelectedRoom, setCurrentChatList } = useChat();
-    const [groupName, setGroupName] = useState(selectedRoom.group.name);
+    const { selectedRoom, setSelectedRoom, setRoomList } = useChat();
+    const [groupName, setGroupName] = useState(selectedRoom.name);
     const [members, setMembers] = useState(selectedRoom.members);
     const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    console.log('selectedRoom', selectedRoom);
-
-    const handleSave = async () => {
-        setLoading(true);
-        try {
-            // Implement logic to save changes to group profile
-            // You can use APIs or other methods to update group information
-            // After saving, you can close the modal
-            await chatService.updateGroup({
-                groupId: selectedRoom.group._id,
-                name: groupName,
-                members: members.map((member) => member._id),
-                profilePic: selectedRoom.group.profilePic,
-            });
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-            setSelectedRoom((prevRoom) => ({
-                ...prevRoom,
-                group: {
-                    ...prevRoom.group,
-                    name: groupName,
-                    profilePic: selectedRoom.group.profilePic,
-                    members: members,
-                },
-                members: members,
-            }));
-            setCurrentChatList((prevList) => {
-                const index = prevList.findIndex(
-                    (chat) => chat._id === selectedRoom._id,
-                );
-                const updatedChat = {
-                    ...prevList[index],
-                    group: {
-                        ...prevList[index].group,
-                        name: groupName,
-                        profilePic: selectedRoom.group.profilePic,
-                        members: members,
-                    },
-                };
-                prevList.splice(index, 1, updatedChat);
-                return prevList;
-            });
-            toast.success('Group profile updated successfully');
-
-            // REAL-TIME UPDATE
-            socket.emit('addMembers', {
-                message: `${userVerified.username} updated the group profile`,
-            });
-        }
-    };
+    const handleSave = async () => {};
 
     const removeMember = (memberId) => {
         // Implement logic to remove a member from the group
-        // Update the members state accordingly
-        setMembers((prevMembers) =>
-            prevMembers.filter((member) => member._id !== memberId),
-        );
+        // You can use APIs or other methods to perform this action
+        // After removing the member, you can handle the UI or redirect the user accordingly
     };
 
     const handleLeaveGroup = async () => {
@@ -88,30 +35,10 @@ function GroupProfileModal() {
         setImage(file);
     };
 
-    const handleRemoveGroup = async () => {
-        setLoading(true);
-        try {
-            // Implement logic to remove the group
-            // You can use APIs or other methods to perform this action
-            // After removing the group, you can handle the UI or redirect the user accordingly
-            await chatService.deleteGroup(selectedRoom.group._id);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-            setSelectedRoom(null);
-            setCurrentChatList((prevList) =>
-                prevList.filter((chat) => chat._id !== selectedRoom._id),
-            );
-            toast.success('Group removed successfully');
-
-            // REAL-TIME UPDATE
-            socket.emit('leaveGroup', selectedRoom.group._id);
-        }
-    };
+    const handleRemoveGroup = async () => {};
 
     return (
-        <div className="mb-4 space-y-4 rounded bg-white px-8 pb-8 pt-6">
+        <div className="mb-4 w-[400px] space-y-4 rounded bg-white px-8 pb-8 pt-6">
             <div className="flex items-center">
                 <label htmlFor="imageUpload" className="cursor-pointer">
                     {image ? (
@@ -120,14 +47,14 @@ function GroupProfileModal() {
                             alt="Group Avatar"
                             className="h-8 w-8 rounded-full"
                         />
-                    ) : selectedRoom.group.profilePic ? (
+                    ) : selectedRoom.image ? (
                         <img
-                            src={selectedRoom.group.profilePic}
+                            src={selectedRoom.image}
                             alt="Avatar"
                             className="h-8 w-8 rounded-full"
                         />
                     ) : (
-                        <FallbackAvatar name={selectedRoom.group.name} />
+                        <FallbackAvatar name={selectedRoom.name} />
                     )}
                 </label>
                 <input
@@ -145,7 +72,7 @@ function GroupProfileModal() {
                 <input
                     className="focus:shadow-outline w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow focus:outline-none"
                     type="text"
-                    disabled={userVerified._id !== selectedRoom.group.admin}
+                    disabled={userVerified._id !== selectedRoom.admin._id}
                     value={groupName}
                     onChange={(e) => setGroupName(e.target.value)}
                     placeholder="Group Name"
@@ -173,7 +100,7 @@ function GroupProfileModal() {
                                 )}
                                 <span className="ml-2">{member.username}</span>
                             </div>
-                            {userVerified._id === selectedRoom.group.admin &&
+                            {userVerified._id === selectedRoom.admin._id &&
                                 userVerified._id !== member._id && (
                                     <button
                                         className="text-red-500 hover:text-red-700"
@@ -187,7 +114,7 @@ function GroupProfileModal() {
                 </ul>
             </div>
             <div className="flex items-center justify-between">
-                {userVerified._id === selectedRoom.group.admin ? (
+                {userVerified._id === selectedRoom.admin ? (
                     <button
                         className="focus:shadow-outline rounded bg-red-500 px-4 py-2 font-bold text-white hover:bg-red-700 focus:outline-none"
                         onClick={handleRemoveGroup}

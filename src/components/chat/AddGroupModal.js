@@ -11,36 +11,43 @@ import { toast } from 'react-toastify';
 const AddGroupModal = ({ onCloseModal, userVerified }) => {
     // State variables
     const [groupName, setGroupName] = useState('');
-    const [groupImage, setGroupImage] = useState(null);
+    const [groupImage, setGroupImage] = useState('');
     const [selectedUsers, setSelectedUsers] = useState([]);
-    const [userSearchResults, setUserSearchResults] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const { setCurrentChatList } = useChat();
+    const [friendList, setFriendList] = useState([]);
+    const { setRoomList } = useChat();
+    const [searchResults, setSearchResults] = useState([]);
     const searchTermDebounce = useDebounce(searchTerm, 500);
+
+    const fetchFriendList = async () => {
+        try {
+            const response = await userService.getFriendList(userVerified._id);
+            setFriendList(response);
+        } catch (error) {
+            console.error('Error fetching friend list:', error);
+        }
+    };
+
+    // Fetch friend list
+    useEffect(() => {
+        fetchFriendList();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userVerified]);
 
     // Function to fetch users based on search term
     useEffect(() => {
-        const fetchUsers = async () => {
-            if (searchTermDebounce.trim() !== '') {
-                try {
-                    const result =
-                        await userService.getUsersBySearchTerms(
-                            searchTermDebounce,
-                        );
-                    // Remove the current user from the search results
-                    const filteredResult = result.filter(
-                        (user) => user._id !== userVerified._id,
-                    );
-                    setUserSearchResults(filteredResult);
-                } catch (error) {
-                    console.error('Error fetching users:', error);
-                }
-            } else {
-                setUserSearchResults([]);
-            }
-        };
-        fetchUsers();
-    }, [searchTermDebounce, userVerified._id]);
+        if (searchTermDebounce.trim() !== '') {
+            const result = friendList.filter((user) =>
+                user.username
+                    .toLowerCase()
+                    .includes(searchTermDebounce.toLowerCase()),
+            );
+            setSearchResults(result);
+        } else {
+            setSearchResults([]);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchTermDebounce]);
 
     // Function to handle changes in group name
     const handleGroupNameChange = (e) => {
@@ -70,42 +77,35 @@ const AddGroupModal = ({ onCloseModal, userVerified }) => {
 
     // Function to handle create group
     const handleCreateGroup = async () => {
+        console.log('Creating group...');
         try {
-            // members = array of userIds of selected users + current user
-            const selectedUserIdList = selectedUsers.map((user) => user._id);
-            const members = [userVerified._id, ...selectedUserIdList];
+            const members = selectedUsers.map((user) => user._id);
+            members.push(userVerified._id);
 
-            const result = await chatService.createGroup({
-                name: groupName,
-                members: members,
-                senderId: userVerified._id,
-            });
+            if (members.length < 3) {
+                toast.error('Please select at least 3 user');
+                return;
+            } else {
+                const response = await chatService.createChatRoom({
+                    members,
+                    type: 'group',
+                    name: groupName || 'New Group',
+                    image: groupImage,
+                    adminId: userVerified._id,
+                });
 
-            console.log('Created Group:', result);
-            console.log('Group Image:', groupImage);
+                setRoomList((prev) => [...prev, response]);
 
-            // update current chat list
-            setCurrentChatList((prevList) => [...prevList, result]);
-
-            // real-time update
-            socket.emit('messageChatGroup', result);
+                // Emit a socket event to the server to notify the other user
+                socket.emit('create-room', {
+                    createdRoom: response,
+                });
+            }
         } catch (error) {
             console.error('Error creating group:', error);
             toast.error('Error creating group');
         } finally {
-            // Clear the form
-            setGroupName('');
-            setGroupImage(null);
-            setSelectedUsers([]);
-            setUserSearchResults([]);
-            setSearchTerm('');
-            // fetch chat list
-            const chatList = await chatService.getAllExistingChats(
-                userVerified._id,
-            );
-            setCurrentChatList(chatList);
-            toast.success('Group created successfully');
-            onCloseModal(); // Close the modal after group creation
+            onCloseModal();
         }
     };
 
@@ -152,34 +152,76 @@ const AddGroupModal = ({ onCloseModal, userVerified }) => {
                     onChange={handleSearchChange}
                 />
 
-                {/* User search results */}
-                <div className="mb-4 max-h-40 overflow-y-auto">
-                    {userSearchResults.map((user) => (
-                        <div
-                            key={user._id}
-                            className={`flex cursor-pointer items-center justify-between px-4 py-2 hover:bg-gray-100 ${selectedUsers.some((u) => u._id === user._id) && 'bg-blue-100'}`}
-                            onClick={() => toggleUserSelection(user)}
-                        >
-                            <div className="flex items-center">
-                                {user.profilePic ? (
-                                    <img
-                                        src={user.profilePic}
-                                        alt={user.username}
-                                        className="h-10 w-10 rounded-full"
-                                    />
-                                ) : (
-                                    <FallbackAvatar name={user.username} />
-                                )}
+                {/* friend list or search result */}
 
-                                <span className="ml-2">{user.username}</span>
-                            </div>
-                            <span>
-                                {selectedUsers.some(
-                                    (u) => u._id === user._id,
-                                ) && 'Selected'}
-                            </span>
-                        </div>
-                    ))}
+                <h3>Friend list</h3>
+
+                <div className="mb-4 min-h-40 overflow-y-auto">
+                    {searchTermDebounce.trim() === ''
+                        ? friendList.map((user) => (
+                              <div
+                                  key={user._id}
+                                  className="flex cursor-pointer items-center justify-between rounded-md bg-gray-100 px-4 py-2 hover:bg-gray-200"
+                                  onClick={() => toggleUserSelection(user)}
+                              >
+                                  <div className="flex items-center">
+                                      {user.profilePic ? (
+                                          <img
+                                              src={user.profilePic}
+                                              alt={user.username}
+                                              className="h-8 w-8 rounded-full"
+                                          />
+                                      ) : (
+                                          <FallbackAvatar
+                                              name={user.username}
+                                          />
+                                      )}
+
+                                      <span className="ml-2">
+                                          {user.username}
+                                      </span>
+                                  </div>
+                                  {selectedUsers.some(
+                                      (u) => u._id === user._id,
+                                  ) ? (
+                                      <span className="text-blue-500">
+                                          Selected
+                                      </span>
+                                  ) : null}
+                              </div>
+                          ))
+                        : searchResults.map((user) => (
+                              <div
+                                  key={user._id}
+                                  className="flex cursor-pointer items-center justify-between rounded-md bg-gray-100 px-4 py-2 hover:bg-gray-200"
+                                  onClick={() => toggleUserSelection(user)}
+                              >
+                                  <div className="flex items-center">
+                                      {user.profilePic ? (
+                                          <img
+                                              src={user.profilePic}
+                                              alt={user.username}
+                                              className="h-8 w-8 rounded-full"
+                                          />
+                                      ) : (
+                                          <FallbackAvatar
+                                              name={user.username}
+                                          />
+                                      )}
+
+                                      <span className="ml-2">
+                                          {user.username}
+                                      </span>
+                                  </div>
+                                  {selectedUsers.some(
+                                      (u) => u._id === user._id,
+                                  ) ? (
+                                      <span className="text-blue-500">
+                                          Selected
+                                      </span>
+                                  ) : null}
+                              </div>
+                          ))}
                 </div>
 
                 {/* Selected users */}
