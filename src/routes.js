@@ -9,8 +9,10 @@ import ForgotPasswordPage from "./pages/forgotPassword";
 import VerifyPasswordPage from "./pages/verify-password";
 import VerifyOtp from "./pages/verify-otp";
 import PhoneLogin from "./pages/phone-login";
-import SettingsPage from "./pages/settings";
+import SettingsPage from "./pages/settings/settings";
 import { useAuth } from "./hooks/useAuth";
+import SettingsLayout from "./layouts/SettingsLayout";
+import PasswordPage from "./pages/settings/password";
 
 function ProtectedRoute({ children }) {
     const { userVerified } = useAuth();
@@ -102,13 +104,24 @@ const routes = [
     },
     // settings page
     {
-        path: "/settings",
+        path: "/settings/profile",
         index: true,
         element: (
             <ProtectedRoute>
-                <ChatLayout>
+                <SettingsLayout>
                     <SettingsPage />
-                </ChatLayout>
+                </SettingsLayout>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/settings/password",
+        index: true,
+        element: (
+            <ProtectedRoute>
+                <SettingsLayout>
+                    <PasswordPage />
+                </SettingsLayout>
             </ProtectedRoute>
         ),
     },

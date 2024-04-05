@@ -106,7 +106,7 @@ function ChatHeader() {
                         </li>
 
                         <li className="cursor-pointer">
-                            <Link to="/settings">
+                            <Link to="/settings/profile">
                                 <CiSettings size={24} />
                             </Link>
                         </li>
@@ -117,9 +117,9 @@ function ChatHeader() {
                                 onClick={handleOpenNotification}
                             >
                                 <HiBell size={24} />
-                                {notifications.length > 0 && (
+                                {notifications?.length > 0 && (
                                     <span className="absolute -right-2 -top-2 rounded-full bg-red-500 px-2 text-white">
-                                        {notifications.length}
+                                        {notifications?.length}
                                     </span>
                                 )}
                             </span>
@@ -151,12 +151,12 @@ function ChatHeader() {
                                 }
                             >
                                 <FaUserFriends size={24} />
-                                {userVerified.friendRequestsReceived.length >
+                                {userVerified.friendRequestsReceived?.length >
                                     0 && (
                                     <span className="absolute -right-2 -top-2 rounded-full bg-red-500 px-2 text-white">
                                         {
                                             userVerified.friendRequestsReceived
-                                                .length
+                                                ?.length
                                         }
                                     </span>
                                 )}

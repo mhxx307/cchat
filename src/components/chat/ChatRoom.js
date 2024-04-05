@@ -19,6 +19,7 @@ const ChatRoom = () => {
     const onOpenModal = () => setOpen(true);
     const onCloseModal = () => setOpen(false);
     const messagesEndRef = useRef(null);
+    const [imagePreview, setImagePreview] = useState(null);
 
     console.log('selected room:', selectedRoom);
     // console.log('messages:', messages);
@@ -114,6 +115,17 @@ const ChatRoom = () => {
         }
     };
 
+    const handlePreviewImage = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                setImagePreview(e.target.result); // Cập nhật đường dẫn xem trước của hình ảnh
+            }
+            reader.readAsDataURL(file);
+        }
+    };
+
     const toggleEmojiPicker = () => {
         setShowEmojiPicker(!showEmojiPicker);
     };
@@ -160,6 +172,13 @@ const ChatRoom = () => {
                         />
                     </div>
                 )}
+               {/* {imagePreview && (
+                    <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="mr-2 h-10 w-10 rounded-full border"
+                    />
+                )} */}
                 <input
                     type="text"
                     placeholder="Type your message..."
@@ -170,7 +189,7 @@ const ChatRoom = () => {
                 <input
                     type="file"
                     accept="image/*"
-                    onChange={handleFileChange}
+                    onChange={handlePreviewImage}
                     className="hidden"
                     id="upload-image"
                 />
