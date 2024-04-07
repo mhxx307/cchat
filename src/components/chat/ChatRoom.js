@@ -7,6 +7,9 @@ import { useChat } from '~/hooks/useChat';
 import MessageItem from './MessageItem';
 import GroupProfileModal from './GroupProfileModal';
 import Modal from 'react-responsive-modal';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { collection, addDoc } from 'firebase/firestore';
+import { storage, db } from '~/configs/firebase';
 
 const ChatRoom = () => {
     const { selectedRoom, fetchUpdatedRooms } = useChat();
@@ -19,7 +22,11 @@ const ChatRoom = () => {
     const onOpenModal = () => setOpen(true);
     const onCloseModal = () => setOpen(false);
     const messagesEndRef = useRef(null);
+    const [img, setImg] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
+    const imageRef = ref(storage);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [selectedImages, setSelectedImages] = useState([]);
 
     console.log('selected room:', selectedRoom);
     // console.log('messages:', messages);
@@ -66,7 +73,69 @@ const ChatRoom = () => {
     const handleSendMessage = async () => {
         setLoading(true);
         try {
-            if (newMessage.trim() === '') {
+            if (newMessage.trim() === '' && !selectedImage) {
+                return;
+            }
+
+            // Tạo một reference cho ảnh trong Firebase Storage
+            let imageUrl = '';
+            if (selectedImage) {
+                const imageRef = ref(storage, `images/${selectedImage.name}`);
+                await uploadBytes(imageRef, selectedImage);
+                imageUrl = await getDownloadURL(imageRef);
+            }
+
+            // Tạo một đối tượng message chứa thông tin tin nhắn và URL của ảnh (nếu có)
+            const message = {
+                senderId: userVerified._id,
+                content: newMessage,
+                images: imageUrl ? [imageUrl] : [],
+                roomId: selectedRoom._id,
+            };
+
+            // Thêm tin nhắn vào Firestore
+            const docRef = await addDoc(collection(db, 'messages'), message);
+
+            // Gửi tin nhắn mới qua socket
+            socket.emit('send-message', {
+                savedMessage: { ...message, _id: docRef.id },
+            });
+
+            // Cập nhật trạng thái
+            setLoading(false);
+            setNewMessage('');
+            setSelectedImage(null);
+            fetchUpdatedRooms();
+            socket.emit('sort-room', {
+                userId: userVerified._id,
+            });
+        } catch (error) {
+            console.error('Error sending message:', error);
+            setLoading(false);
+        }
+    };
+
+    const MAX_FILE_SIZE = 2 * 1024 * 1024;
+
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files);
+
+        const selectedImagesArray = files.map((file) => ({
+            file,
+            preview: URL.createObjectURL(file),
+        }));
+
+        setSelectedImages((prevImages) => [
+            ...prevImages,
+            ...selectedImagesArray,
+        ]);
+    };
+
+    // Send image message
+    const handleSendImage = async () => {
+        setLoading(true);
+        try {
+            if (!img) {
                 return;
             }
 
@@ -75,11 +144,13 @@ const ChatRoom = () => {
                     (member) => member._id !== userVerified._id,
                 );
 
+                const responseImg = await uploadBytes(imageRef, img);
+                const url = await getDownloadURL(responseImg.ref);
+
                 const response = await chatService.sendMessage({
                     senderId: userVerified._id,
                     receiverId: receiverId,
-                    content: newMessage,
-                    images: [],
+                    images: [url],
                     roomId: selectedRoom._id,
                 });
 
@@ -90,10 +161,12 @@ const ChatRoom = () => {
                     savedMessage: response,
                 });
             } else if (selectedRoom.type === 'group') {
+                const responseImg = await uploadBytes(imageRef, img);
+                const url = await getDownloadURL(responseImg.ref);
+
                 const response = await chatService.sendMessage({
                     senderId: userVerified._id,
-                    content: newMessage,
-                    images: [],
+                    images: [url],
                     roomId: selectedRoom._id,
                 });
 
@@ -115,24 +188,14 @@ const ChatRoom = () => {
         }
     };
 
-    const handlePreviewImage = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                setImagePreview(e.target.result); // Cập nhật đường dẫn xem trước của hình ảnh
-            }
-            reader.readAsDataURL(file);
-        }
-    };
-
     const toggleEmojiPicker = () => {
         setShowEmojiPicker(!showEmojiPicker);
     };
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        console.log('file:', file);
+    const handleRemoveImage = (index) => {
+        const newSelectedImages = [...selectedImages];
+        newSelectedImages.splice(index, 1);
+        setSelectedImages(newSelectedImages);
     };
 
     return (
@@ -160,58 +223,84 @@ const ChatRoom = () => {
                     ))}
                 <div ref={messagesEndRef} />
             </div>
-
-            <div className="flex items-center">
-                {showEmojiPicker && (
-                    <div className="absolute right-[5%] top-[20%] mt-8">
-                        <EmojiPicker
-                            onEmojiClick={(props) => {
-                                setShowEmojiPicker(false);
-                                setNewMessage(newMessage + props.emoji);
-                            }}
-                        />
-                    </div>
-                )}
-               {/* {imagePreview && (
-                    <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="mr-2 h-10 w-10 rounded-full border"
+            <div>
+                <div className="flex space-x-2">
+                    {selectedImages.map((image, index) => (
+                        <div key={index} className="relative">
+                            <img
+                                src={image.preview}
+                                alt={`Preview ${index}`}
+                                className="h-20 w-20 rounded-md object-cover"
+                            />
+                            <button
+                                className="absolute right-0 top-0 flex items-center justify-center rounded-full p-1 text-xs text-white"
+                                style={{ backgroundColor: '#ed3b3b' }} // Thay đổi màu nền
+                                onClick={() => handleRemoveImage(index)}
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    className="h-4 w-4"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M6 18L18 6M6 6l12 12"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    ))}
+                </div>
+                <div className="flex items-end">
+                    {showEmojiPicker && (
+                        <div className="absolute right-[5%] top-[20%] mt-8">
+                            <EmojiPicker
+                                onEmojiClick={(props) => {
+                                    setShowEmojiPicker(false);
+                                    setNewMessage(newMessage + props.emoji);
+                                }}
+                            />
+                        </div>
+                    )}
+                    <input
+                        type="text"
+                        placeholder="Type your message..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        className="mr-2 flex-1 rounded-md border p-2 focus:border-blue-500 focus:outline-none"
                     />
-                )} */}
-                <input
-                    type="text"
-                    placeholder="Type your message..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    className="mr-2 flex-1 rounded-md border p-2 focus:border-blue-500 focus:outline-none"
-                />
-                <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePreviewImage}
-                    className="hidden"
-                    id="upload-image"
-                />
-                <label
-                    htmlFor="upload-image"
-                    className="mr-2 cursor-pointer text-2xl focus:outline-none"
-                >
-                    📎
-                </label>
-                <button
-                    onClick={toggleEmojiPicker}
-                    className="text-2xl focus:outline-none"
-                >
-                    😊
-                </button>
-                <button
-                    onClick={handleSendMessage}
-                    disabled={loading}
-                    className="focus:shadow-outline rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-600 focus:outline-none"
-                >
-                    {loading ? 'Sending...' : 'Send'}
-                </button>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleFileChange}
+                        className="hidden"
+                        id="upload-image"
+                    />
+                    <label
+                        htmlFor="upload-image"
+                        className="mr-2 cursor-pointer text-2xl focus:outline-none"
+                    >
+                        📎
+                    </label>
+                    <button
+                        onClick={toggleEmojiPicker}
+                        className="text-2xl focus:outline-none"
+                    >
+                        😊
+                    </button>
+                    <button
+                        onClick={handleSendMessage}
+                        disabled={loading}
+                        className="focus:shadow-outline rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-600 focus:outline-none"
+                    >
+                        {loading ? 'Sending...' : 'Send'}
+                    </button>
+                </div>
             </div>
         </div>
     );
