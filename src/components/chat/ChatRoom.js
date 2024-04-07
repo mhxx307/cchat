@@ -16,6 +16,8 @@ const ChatRoom = () => {
     const { userVerified } = useAuth();
     const [loading, setLoading] = useState(false);
     const [open, setOpen] = useState(false);
+    const [isReplying, setIsReplying] = useState(false);
+    const [replyingMessage, setReplyingMessage] = useState(null);
     const onOpenModal = () => setOpen(true);
     const onCloseModal = () => setOpen(false);
     const messagesEndRef = useRef(null);
@@ -123,6 +125,16 @@ const ChatRoom = () => {
         console.log('file:', file);
     };
 
+    const handleReply = (message) => {
+        setIsReplying(true);
+        setReplyingMessage(message._id);
+        console.log('Reply message:', message);
+    };
+
+    const handleDelete = (message) => {
+        console.log('Delete message:', message);
+    };
+
     return (
         <div className="flex h-[80vh] flex-col justify-between rounded-md bg-gray-100 px-3 pb-2 md:h-full">
             <div className="">
@@ -144,11 +156,37 @@ const ChatRoom = () => {
             <div className="mb-2 max-h-[60vh] flex-1 overflow-y-auto">
                 {messages.length > 0 &&
                     messages.map((message) => (
-                        <MessageItem key={message._id} message={message} />
+                        <MessageItem
+                            key={message._id}
+                            message={message}
+                            onReply={handleReply}
+                            onDelete={handleDelete}
+                        />
                     ))}
                 <div ref={messagesEndRef} />
             </div>
 
+            {isReplying && (
+                <div className="rounded-md bg-gray-300 p-2">
+                    <div className="flex items-center space-x-2">
+                        <span>Replying to:</span>
+                        <span className="text-sm">
+                            {
+                                messages.find(
+                                    (message) =>
+                                        message._id === replyingMessage,
+                                ).content
+                            }
+                        </span>
+                        <button
+                            onClick={() => setIsReplying(false)}
+                            className="text-red-500"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
             <div className="flex items-center">
                 {showEmojiPicker && (
                     <div className="absolute right-[5%] top-[20%] mt-8">

@@ -3,6 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "dependencies": {
+        "@floating-ui/react": "^0.20.1",
         "@headlessui/react": "^1.7.18",
         "@hookform/resolvers": "^3.3.4",
         "@testing-library/jest-dom": "^5.17.0",
@@ -11,6 +12,7 @@
         "axios": "^1.6.5",
         "emoji-picker-react": "^4.7.10",
         "firebase": "^10.8.1",
+        "framer-motion": "^11.0.25",
         "lodash": "^4.17.21",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
