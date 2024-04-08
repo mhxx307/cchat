@@ -21,6 +21,7 @@ const ChatRoom = () => {
     const onOpenModal = () => setOpen(true);
     const onCloseModal = () => setOpen(false);
     const messagesEndRef = useRef(null);
+    const [selectedImages, setSelectedImages] = useState([]);
 
     // console.log('selected room:', selectedRoom);
     // console.log('messages:', messages);
@@ -125,8 +126,17 @@ const ChatRoom = () => {
     };
 
     const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        console.log('file:', file);
+        const files = Array.from(e.target.files);
+
+        const selectedImagesArray = files.map((file) => ({
+            file,
+            preview: URL.createObjectURL(file),
+        }));
+
+        setSelectedImages((prevImages) => [
+            ...prevImages,
+            ...selectedImagesArray,
+        ]);
     };
 
     const handleReply = (message) => {
@@ -134,6 +144,13 @@ const ChatRoom = () => {
         setReplyingMessage(message._id);
         console.log('Reply message:', message);
     };
+    
+    const handleRemoveImage = (index) => {
+        const newSelectedImages = [...selectedImages];
+        newSelectedImages.splice(index, 1);
+        setSelectedImages(newSelectedImages);
+    };
+    
 
     const handleDelete = async (message) => {
         console.log('Delete message:', message);
@@ -200,6 +217,38 @@ const ChatRoom = () => {
                     </div>
                 </div>
             )}
+            <div className="flex space-x-2">
+                {selectedImages.map((image, index) => (
+                    <div key={index} className="relative">
+                        <img
+                            src={image.preview}
+                            alt={`Preview ${index}`}
+                            className="h-20 w-20 rounded-md object-cover"
+                        />
+                        <button
+                            className="absolute right-0 top-0 flex items-center justify-center rounded-full bg-red-500 p-1 text-xs text-white"
+                            style={{ backgroundColor: '#ed3b3b' }} // Thay đổi màu nền
+                            onClick={() => handleRemoveImage(index)}
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                className="h-4 w-4"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M6 18L18 6M6 6l12 12"
+                                />
+                            </svg>
+                        </button>
+                    </div>
+                ))}
+            </div>
+
             <div className="flex items-center">
                 {showEmojiPicker && (
                     <div className="absolute right-[5%] top-[20%] mt-8">
