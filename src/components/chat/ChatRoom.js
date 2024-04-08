@@ -22,7 +22,7 @@ const ChatRoom = () => {
     const onCloseModal = () => setOpen(false);
     const messagesEndRef = useRef(null);
 
-    console.log('selected room:', selectedRoom);
+    // console.log('selected room:', selectedRoom);
     // console.log('messages:', messages);
 
     // fetch messages when selected room changes
@@ -82,6 +82,7 @@ const ChatRoom = () => {
                     content: newMessage,
                     images: [],
                     roomId: selectedRoom._id,
+                    replyMessageId: replyingMessage || null,
                 });
 
                 setMessages([...messages, response]);
@@ -96,6 +97,7 @@ const ChatRoom = () => {
                     content: newMessage,
                     images: [],
                     roomId: selectedRoom._id,
+                    replyMessageId: replyingMessage || null,
                 });
 
                 setMessages([...messages, response]);
@@ -110,6 +112,8 @@ const ChatRoom = () => {
         } finally {
             setLoading(false);
             fetchUpdatedRooms();
+            setReplyingMessage(null);
+            setIsReplying(false);
             socket.emit('sort-room', {
                 userId: userVerified._id,
             });
@@ -131,8 +135,17 @@ const ChatRoom = () => {
         console.log('Reply message:', message);
     };
 
-    const handleDelete = (message) => {
+    const handleDelete = async (message) => {
         console.log('Delete message:', message);
+        try {
+            await chatService.deleteMessage(message._id);
+            const updatedMessages = messages.filter(
+                (msg) => msg._id !== message._id,
+            );
+            setMessages(updatedMessages);
+        } catch (error) {
+            console.error('Error deleting message:', error);
+        }
     };
 
     return (

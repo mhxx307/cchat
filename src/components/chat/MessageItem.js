@@ -3,9 +3,16 @@ import FallbackAvatar from '../shared/FallbackAvatar';
 import Popover from '../shared/Popover';
 import { FaReply } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
+import { useState } from 'react';
+import Modal from 'react-responsive-modal';
 
 function MessageItem({ message, onReply, onDelete }) {
     const { userVerified } = useAuth();
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    const openModal = () => {
+        setIsDeleteModalOpen(true);
+    };
 
     const handleReply = () => {
         onReply(message);
@@ -15,17 +22,47 @@ function MessageItem({ message, onReply, onDelete }) {
         onDelete(message);
     };
 
+    const handleReferenceMessage = (message) => {
+        const referencedMessageId = message.replyTo._id; // Assuming the ID of the referenced message is stored in message.replyTo._id
+        const referencedMessageElement =
+            document.getElementById(referencedMessageId);
+
+        if (referencedMessageElement) {
+            referencedMessageElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'center',
+            });
+        }
+    };
+
+    console.log('Message:', message);
+
     return (
-        <>
+        <div
+            id={message._id}
+            className={
+                message.sender._id === userVerified._id
+                    ? 'mb-4 flex flex-col items-end'
+                    : 'mb-4 flex flex-col items-start'
+            }
+        >
             {message.sender._id === userVerified._id ? (
                 <div className="mb-4 flex flex-col items-end">
+                    {/* reply message */}
+                    {message.replyTo && (
+                        <ReplyMessageItem
+                            message={message}
+                            handleReferenceMessage={handleReferenceMessage}
+                        />
+                    )}
+
                     <Popover
                         placement="left"
                         renderPopover={
                             <Options
-                                message={message}
                                 onReply={handleReply}
-                                onDelete={handleDelete}
+                                openModal={openModal}
                             />
                         }
                     >
@@ -33,7 +70,6 @@ function MessageItem({ message, onReply, onDelete }) {
                             <div className="inline max-w-[100%] rounded-md bg-blue-500 p-2 text-white">
                                 {message.content}
                             </div>
-
                             {message.sender.profilePic ? (
                                 <img
                                     src={message.sender.profilePic}
@@ -48,19 +84,26 @@ function MessageItem({ message, onReply, onDelete }) {
                         </div>
                     </Popover>
 
-                    <div className="mt-1 text-xs text-gray-500">
+                    <div className="mt-1 text-xs text-gray-300">
                         {new Date(message.timestamp).toLocaleString()}
                     </div>
                 </div>
             ) : (
                 <div className="mb-4 flex flex-col items-start">
+                    {/* reply message */}
+                    {message.replyTo && (
+                        <ReplyMessageItem
+                            message={message}
+                            handleReferenceMessage={handleReferenceMessage}
+                        />
+                    )}
+
                     <Popover
                         placement="right"
                         renderPopover={
                             <Options
-                                message={message}
                                 onReply={handleReply}
-                                onDelete={handleDelete}
+                                openModal={openModal}
                             />
                         }
                     >
@@ -87,17 +130,42 @@ function MessageItem({ message, onReply, onDelete }) {
                     </div>
                 </div>
             )}
-        </>
+
+            {/* modal confirm delete */}
+            <Modal
+                open={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                center
+            >
+                <div className="p-4">
+                    <h2>Are you sure you want to delete this message?</h2>
+                    <div className="flex justify-end space-x-2">
+                        <button
+                            onClick={() => setIsDeleteModalOpen(false)}
+                            className="rounded-md bg-gray-300 p-2"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleDelete}
+                            className="rounded-md bg-red-500 p-2 text-white"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+        </div>
     );
 }
 
 export default MessageItem;
 
-const Options = ({ message, onReply, onDelete }) => {
+const Options = ({ onReply, openModal }) => {
     return (
         <div className="flex space-x-2">
             <button
-                onClick={onDelete}
+                onClick={() => openModal()}
                 className="flex items-center space-x-1 text-red-500"
             >
                 <MdDelete />
@@ -105,6 +173,20 @@ const Options = ({ message, onReply, onDelete }) => {
             <button onClick={onReply} className="flex items-center space-x-1">
                 <FaReply />
             </button>
+        </div>
+    );
+};
+
+const ReplyMessageItem = ({ message, handleReferenceMessage }) => {
+    return (
+        <div
+            className="mb-2 cursor-pointer rounded-md bg-gray-300 p-2"
+            onClick={() => handleReferenceMessage(message)}
+        >
+            <div className="text-xs text-gray-500">
+                {message.replyTo.sender.username} replied:
+            </div>
+            <div>{message.replyTo.content}</div>
         </div>
     );
 };
