@@ -7,7 +7,7 @@ import authService from '~/services/authService';
 
 function VerifyOtp() {
     const [otp, setOtp] = useState('');
-    const { userForVerified, setUserForVerified } = useAuth();
+    const { userForVerified, setUserForVerified, setUserVerified } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -20,6 +20,7 @@ function VerifyOtp() {
             console.log(result);
             toast.success(result.message);
             setUserForVerified(null);
+            setUserVerified(result.user);
             navigate('/login');
         } catch (error) {
             toast.error('An error occurred. Please try again.');

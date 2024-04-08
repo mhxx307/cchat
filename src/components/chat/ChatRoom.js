@@ -16,11 +16,13 @@ const ChatRoom = () => {
     const { userVerified } = useAuth();
     const [loading, setLoading] = useState(false);
     const [open, setOpen] = useState(false);
+    const [isReplying, setIsReplying] = useState(false);
+    const [replyingMessage, setReplyingMessage] = useState(null);
     const onOpenModal = () => setOpen(true);
     const onCloseModal = () => setOpen(false);
     const messagesEndRef = useRef(null);
 
-    console.log('selected room:', selectedRoom);
+    // console.log('selected room:', selectedRoom);
     // console.log('messages:', messages);
 
     // fetch messages when selected room changes
@@ -80,6 +82,7 @@ const ChatRoom = () => {
                     content: newMessage,
                     images: [],
                     roomId: selectedRoom._id,
+                    replyMessageId: replyingMessage || null,
                 });
 
                 setMessages([...messages, response]);
@@ -94,6 +97,7 @@ const ChatRoom = () => {
                     content: newMessage,
                     images: [],
                     roomId: selectedRoom._id,
+                    replyMessageId: replyingMessage || null,
                 });
 
                 setMessages([...messages, response]);
@@ -108,6 +112,8 @@ const ChatRoom = () => {
         } finally {
             setLoading(false);
             fetchUpdatedRooms();
+            setReplyingMessage(null);
+            setIsReplying(false);
             socket.emit('sort-room', {
                 userId: userVerified._id,
             });
@@ -121,6 +127,25 @@ const ChatRoom = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         console.log('file:', file);
+    };
+
+    const handleReply = (message) => {
+        setIsReplying(true);
+        setReplyingMessage(message._id);
+        console.log('Reply message:', message);
+    };
+
+    const handleDelete = async (message) => {
+        console.log('Delete message:', message);
+        try {
+            await chatService.deleteMessage(message._id);
+            const updatedMessages = messages.filter(
+                (msg) => msg._id !== message._id,
+            );
+            setMessages(updatedMessages);
+        } catch (error) {
+            console.error('Error deleting message:', error);
+        }
     };
 
     return (
@@ -144,11 +169,37 @@ const ChatRoom = () => {
             <div className="mb-2 max-h-[60vh] flex-1 overflow-y-auto">
                 {messages.length > 0 &&
                     messages.map((message) => (
-                        <MessageItem key={message._id} message={message} />
+                        <MessageItem
+                            key={message._id}
+                            message={message}
+                            onReply={handleReply}
+                            onDelete={handleDelete}
+                        />
                     ))}
                 <div ref={messagesEndRef} />
             </div>
 
+            {isReplying && (
+                <div className="rounded-md bg-gray-300 p-2">
+                    <div className="flex items-center space-x-2">
+                        <span>Replying to:</span>
+                        <span className="text-sm">
+                            {
+                                messages.find(
+                                    (message) =>
+                                        message._id === replyingMessage,
+                                ).content
+                            }
+                        </span>
+                        <button
+                            onClick={() => setIsReplying(false)}
+                            className="text-red-500"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
             <div className="flex items-center">
                 {showEmojiPicker && (
                     <div className="absolute right-[5%] top-[20%] mt-8">

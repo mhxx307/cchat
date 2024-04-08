@@ -37,23 +37,21 @@ const chatService = {
 
         return response;
     },
-    sendMessage: async ({ senderId, receiverId, content, images, roomId }) => {
+    sendMessage: async ({
+        senderId,
+        receiverId,
+        content,
+        images,
+        roomId,
+        replyMessageId,
+    }) => {
         const response = await httpRequest.post('/chat/sendMessage', {
             senderId,
             receiverId,
             content,
             images,
             roomId,
-        });
-
-        return response;
-    },
-    sendMessageToGroup: async ({ senderId, roomId, content, images }) => {
-        const response = await httpRequest.post('/chat/sendMessageToGroup', {
-            senderId,
-            roomId,
-            content,
-            images,
+            replyTo: replyMessageId,
         });
 
         return response;
@@ -63,6 +61,13 @@ const chatService = {
             userId,
             chatroomId,
         });
+
+        return response;
+    },
+    deleteMessage: async (messageId) => {
+        const response = await httpRequest.delete(
+            `/chat/deleteMessage/${messageId}`,
+        );
 
         return response;
     },
