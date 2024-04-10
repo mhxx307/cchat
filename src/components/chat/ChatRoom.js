@@ -7,6 +7,7 @@ import { useChat } from '~/hooks/useChat';
 import MessageItem from './MessageItem';
 import GroupProfileModal from './GroupProfileModal';
 import Modal from 'react-responsive-modal';
+// import { Notifications, Options, VideoPlayer } from './VideoComponents';
 
 const ChatRoom = () => {
     const { selectedRoom, fetchUpdatedRooms } = useChat();
@@ -144,13 +145,12 @@ const ChatRoom = () => {
         setReplyingMessage(message._id);
         console.log('Reply message:', message);
     };
-    
+
     const handleRemoveImage = (index) => {
         const newSelectedImages = [...selectedImages];
         newSelectedImages.splice(index, 1);
         setSelectedImages(newSelectedImages);
     };
-    
 
     const handleDelete = async (message) => {
         console.log('Delete message:', message);
@@ -181,6 +181,9 @@ const ChatRoom = () => {
                         </Modal>
                     </>
                 )}
+                {/* <VideoPlayer />
+                <Options />
+                <Notifications /> */}
             </div>
 
             <div className="mb-2 max-h-[60vh] flex-1 overflow-y-auto">
