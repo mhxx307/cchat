@@ -167,7 +167,7 @@ const Options = ({ onReply, openModal, message }) => {
     const { userVerified } = useAuth();
     return (
         <div className="flex space-x-2">
-            {message.sender._id !== userVerified._id && (
+            {message.sender._id === userVerified._id && (
                 <button
                     onClick={() => openModal()}
                     className="flex items-center space-x-1 text-red-500"
