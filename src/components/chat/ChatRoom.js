@@ -7,6 +7,9 @@ import { useChat } from '~/hooks/useChat';
 import MessageItem from './MessageItem';
 import GroupProfileModal from './GroupProfileModal';
 import Modal from 'react-responsive-modal';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '~/configs/firebase';
+import { v4 } from 'uuid';
 
 const ChatRoom = () => {
     const { selectedRoom, fetchUpdatedRooms } = useChat();
@@ -22,6 +25,8 @@ const ChatRoom = () => {
     const onCloseModal = () => setOpen(false);
     const messagesEndRef = useRef(null);
     const [selectedImages, setSelectedImages] = useState([]);
+
+    console.log('selectedImages', selectedImages);
 
     // console.log('selected room:', selectedRoom);
     // console.log('messages:', messages);
@@ -65,30 +70,54 @@ const ChatRoom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    const uploadToFirebase = async () => {
+        const imageUrls = [];
+        // Upload each image to Firebase Storage
+        for (const selectedImage of selectedImages) {
+            const imageFile = selectedImage.file;
+            // Tạo một reference đến vị trí lưu trữ trên Firebase Storage, có thể dùng tên file hoặc unique ID (ví dụ: UUID)
+            const imageRef = ref(storage, `images/${imageFile?.name + v4()}`);
+            // Thực hiện tải lên ảnh vào Firebase Storage
+            const snapshot = await uploadBytes(imageRef, imageFile);
+            // Lấy đường dẫn tải xuống (URL) của ảnh đã tải lên
+            const imageUrl = await getDownloadURL(snapshot.ref);
+            // Thêm URL của ảnh vào mảng imageUrls
+            imageUrls.push(imageUrl);
+        }
+
+        console.log('Uploaded image URLs:', imageUrls);
+
+        return imageUrls;
+    }
+
     const handleSendMessage = async () => {
         setLoading(true);
+
         try {
             if (newMessage.trim() === '') {
                 return;
             }
-
+    
+            const imageUrls = await uploadToFirebase();
+           
+    
             if (selectedRoom.type === '1v1') {
                 const receiverId = selectedRoom.members.find(
                     (member) => member._id !== userVerified._id,
                 );
-
+    
                 const response = await chatService.sendMessage({
                     senderId: userVerified._id,
                     receiverId: receiverId,
                     content: newMessage,
-                    images: [],
+                    images: imageUrls.length > 0 ? imageUrls : [], // Thêm mảng imageUrls vào thông tin tin nhắn
                     roomId: selectedRoom._id,
                     replyMessageId: replyingMessage || null,
                 });
-
+    
                 setMessages([...messages, response]);
                 setNewMessage('');
-
+    
                 socket.emit('send-message', {
                     savedMessage: response,
                 });
@@ -96,14 +125,14 @@ const ChatRoom = () => {
                 const response = await chatService.sendMessage({
                     senderId: userVerified._id,
                     content: newMessage,
-                    images: [],
+                    images: imageUrls, // Thêm mảng imageUrls vào thông tin tin nhắn
                     roomId: selectedRoom._id,
                     replyMessageId: replyingMessage || null,
                 });
-
+    
                 setMessages([...messages, response]);
                 setNewMessage('');
-
+    
                 socket.emit('send-message', {
                     savedMessage: response,
                 });
@@ -151,7 +180,6 @@ const ChatRoom = () => {
         setSelectedImages(newSelectedImages);
     };
     
-
     const handleDelete = async (message) => {
         console.log('Delete message:', message);
         try {

@@ -9,6 +9,7 @@ import Modal from 'react-responsive-modal';
 function MessageItem({ message, onReply, onDelete }) {
     const { userVerified } = useAuth();
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    console.log(message); // gio em kiem tra, neu ma message no co images, em tu tim cho nao hien thi cho dep giup a nha
 
     const openModal = () => {
         setIsDeleteModalOpen(true);
@@ -36,101 +37,60 @@ function MessageItem({ message, onReply, onDelete }) {
         }
     };
 
-    console.log('Message:', message);
-
     return (
         <div
             id={message._id}
             className={
                 message.sender._id === userVerified._id
-                    ? 'mb-4 flex flex-col items-end'
-                    : 'mb-4 flex flex-col items-start'
+                    ? 'mb-2 flex flex-row-reverse items-end'
+                    : 'mb-2 flex flex-row items-end'
             }
         >
-            {message.sender._id === userVerified._id ? (
-                <div className="mb-4 flex flex-col items-end">
-                    {/* reply message */}
-                    {message.replyTo && (
-                        <ReplyMessageItem
-                            message={message}
-                            handleReferenceMessage={handleReferenceMessage}
+            <div className="max-w-[70%]">
+                {/* reply message */}
+                {message.replyTo && (
+                    <ReplyMessageItem
+                        message={message}
+                        handleReferenceMessage={handleReferenceMessage}
+                    />
+                )}
+    
+                <div className="relative">
+                    {message.images && message.images.length > 0 && (
+                        <div className="flex flex-wrap justify-start mb-2">
+                            {message.images.map((imageUrl, index) => (
+                                <img
+                                    key={index}
+                                    src={imageUrl}
+                                    alt={`Image ${index}`}
+                                    className="message-image max-w-[200px] max-h-[200px] mr-2 mb-2 rounded-lg shadow-md"
+                                />
+                            ))}
+                        </div>
+                    )}
+    
+                    <div className={`rounded-lg p-2 break-words ${message.sender._id === userVerified._id ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'}`}>
+                        {message.content}
+                    </div>
+                    {message.sender.profilePic ? (
+                        <img
+                            src={message.sender.profilePic}
+                            alt="profile"
+                            className={`absolute bottom-0 ${message.sender._id === userVerified._id ? 'right-0' : 'left-0'} -mb-6 h-8 w-8 rounded-full border-2 border-white`}
+                        />
+                    ) : (
+                        <FallbackAvatar
+                            name={message.sender.username}
+                            className={`absolute bottom-0 ${message.sender._id === userVerified._id ? 'right-0' : 'left-0'} -mb-6`}
                         />
                     )}
-
-                    <Popover
-                        placement="left"
-                        renderPopover={
-                            <Options
-                                onReply={handleReply}
-                                openModal={openModal}
-                            />
-                        }
-                    >
-                        <div className="flex space-x-2">
-                            <div className="inline max-w-[100%] rounded-md bg-blue-500 p-2 text-white">
-                                {message.content}
-                            </div>
-                            {message.sender.profilePic ? (
-                                <img
-                                    src={message.sender.profilePic}
-                                    alt="profile"
-                                    className="h-6 w-6 rounded-full"
-                                />
-                            ) : (
-                                <FallbackAvatar
-                                    name={message.sender.username}
-                                />
-                            )}
-                        </div>
-                    </Popover>
-
-                    <div className="mt-1 text-xs text-gray-300">
-                        {new Date(message.timestamp).toLocaleString()}
-                    </div>
                 </div>
-            ) : (
-                <div className="mb-4 flex flex-col items-start">
-                    {/* reply message */}
-                    {message.replyTo && (
-                        <ReplyMessageItem
-                            message={message}
-                            handleReferenceMessage={handleReferenceMessage}
-                        />
-                    )}
-
-                    <Popover
-                        placement="right"
-                        renderPopover={
-                            <Options
-                                onReply={handleReply}
-                                openModal={openModal}
-                            />
-                        }
-                    >
-                        <div className="flex space-x-2">
-                            {message.sender.profilePic ? (
-                                <img
-                                    src={message.sender.profilePic}
-                                    alt="profile"
-                                    className="h-6 w-6 rounded-full"
-                                />
-                            ) : (
-                                <FallbackAvatar
-                                    name={message.sender.username}
-                                />
-                            )}
-
-                            <div className="max-w-[100%] rounded-md bg-gray-300 p-2">
-                                {message.content}
-                            </div>
-                        </div>
-                    </Popover>
-                    <div className="mt-1 text-xs text-gray-500">
-                        {new Date(message.timestamp).toLocaleString()}
-                    </div>
+    
+                <div className="mt-1 text-xs text-gray-400">
+                    {new Date(message.timestamp).toLocaleString()}
                 </div>
-            )}
-
+            </div>
+    
             {/* modal confirm delete */}
             <Modal
                 open={isDeleteModalOpen}
@@ -156,7 +116,7 @@ function MessageItem({ message, onReply, onDelete }) {
                 </div>
             </Modal>
         </div>
-    );
+    ); 
 }
 
 export default MessageItem;
