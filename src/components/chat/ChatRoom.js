@@ -117,6 +117,7 @@ const ChatRoom = () => {
     
                 setMessages([...messages, response]);
                 setNewMessage('');
+                setSelectedImages([]);
     
                 socket.emit('send-message', {
                     savedMessage: response,

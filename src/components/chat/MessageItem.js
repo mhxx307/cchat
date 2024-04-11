@@ -9,7 +9,6 @@ import Modal from 'react-responsive-modal';
 function MessageItem({ message, onReply, onDelete }) {
     const { userVerified } = useAuth();
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    console.log(message); // gio em kiem tra, neu ma message no co images, em tu tim cho nao hien thi cho dep giup a nha
 
     const openModal = () => {
         setIsDeleteModalOpen(true);
@@ -36,7 +35,9 @@ function MessageItem({ message, onReply, onDelete }) {
             });
         }
     };
-    
+
+    console.log('Message:', message);
+
     return (
         <div
             id={message._id}
@@ -56,50 +57,59 @@ function MessageItem({ message, onReply, onDelete }) {
                         />
                     )}
     
-                    <div className="flex space-x-2 items-center">
-                        <Popover
-                            placement="left"
-                            renderPopover={
-                                <Options
-                                    onReply={handleReply}
-                                    openModal={openModal}
-                                    message={message}
-                                />
-                            }
-                        >
+                    <Popover
+                        placement="left"
+                        renderPopover={
+                            <Options
+                                onReply={handleReply}
+                                openModal={openModal}
+                                message={message}
+                            />
+                        }
+                    >
+                        <div className="flex items-start justify-end space-x-2">
+                            {/* Container chứa cả hình ảnh hồ sơ và nội dung tin nhắn, căn phải */}
                             <div className="max-w-[100%] rounded-md bg-blue-500 p-2 text-white">
-                                {message.content}
+                                {message.content && (
+                                    <div className="mb-2">
+                                        {message.content}
+                                    </div>
+                                )}
+                                {message.images &&
+                                    message.images.length > 0 && (
+                                        <div className="flex flex-wrap justify-start">
+                                            {message.images.map(
+                                                (imageUrl, index) => (
+                                                    <img
+                                                        key={index}
+                                                        src={imageUrl}
+                                                        alt={`Image ${index}`}
+                                                        className="message-image mb-2 mr-2 max-h-[200px] max-w-[200px] rounded-lg shadow-md"
+                                                    />
+                                                ),
+                                            )}
+                                        </div>
+                                    )}
                             </div>
-                        </Popover>
-                        {message.sender.profilePic ? (
-                            <img
-                                src={message.sender.profilePic}
-                                alt="profile"
-                                className="h-6 w-6 rounded-full"
-                            />
-                        ) : (
-                            <FallbackAvatar
-                                name={message.sender.username}
-                            />
-                        )}
-                    </div>
-    
-                    {message.images && message.images.length > 0 && (
-                        <div className="flex flex-wrap justify-start mt-2">
-                            {message.images.map((imageUrl, index) => (
+                            {message.sender.profilePic ? (
                                 <img
-                                    key={index}
-                                    src={imageUrl}
-                                    alt={`Image ${index}`}
-                                    className="message-image max-w-[200px] max-h-[200px] mr-2 mb-2 rounded-lg shadow-md"
+                                    src={message.sender.profilePic}
+                                    alt="profile"
+                                    className="h-6 w-6 rounded-full"
                                 />
-                            ))}
+                            ) : (
+                                <FallbackAvatar
+                                    name={message.sender.username}
+                                />
+                            )}
                         </div>
-                    )}
+                    </Popover>
     
                     <div className="mt-1 text-xs text-gray-300">
                         {new Date(message.timestamp).toLocaleString()}
                     </div>
+    
+                    {/* Images display */}
                 </div>
             ) : (
                 <div className="mb-4 flex flex-col items-start">
@@ -111,51 +121,59 @@ function MessageItem({ message, onReply, onDelete }) {
                         />
                     )}
     
-                    <div className="flex space-x-2 items-center">
-                        {message.sender.profilePic ? (
-                            <img
-                                src={message.sender.profilePic}
-                                alt="profile"
-                                className="h-6 w-6 rounded-full"
+                    <Popover
+                        placement="right"
+                        renderPopover={
+                            <Options
+                                onReply={handleReply}
+                                openModal={openModal}
+                                message={message}
                             />
-                        ) : (
-                            <FallbackAvatar
-                                name={message.sender.username}
-                            />
-                        )}
-    
-                        <Popover
-                            placement="right"
-                            renderPopover={
-                                <Options
-                                    onReply={handleReply}
-                                    openModal={openModal}
-                                    message={message}
-                                />
-                            }
-                        >
-                            <div className="max-w-[100%] rounded-md bg-gray-300 p-2">
-                                {message.content}
-                            </div>
-                        </Popover>
-                    </div>
-    
-                    {message.images && message.images.length > 0 && (
-                        <div className="flex flex-wrap justify-start mt-2">
-                            {message.images.map((imageUrl, index) => (
+                        }
+                    >
+                        <div className="flex items-start space-x-2">
+                            {/* Container chứa cả hình ảnh hồ sơ và nội dung tin nhắn */}
+                            {message.sender.profilePic ? (
                                 <img
-                                    key={index}
-                                    src={imageUrl}
-                                    alt={`Image ${index}`}
-                                    className="message-image max-w-[200px] max-h-[200px] mr-2 mb-2 rounded-lg shadow-md"
+                                    src={message.sender.profilePic}
+                                    alt="profile"
+                                    className="h-6 w-6 rounded-full"
                                 />
-                            ))}
+                            ) : (
+                                <FallbackAvatar
+                                    name={message.sender.username}
+                                />
+                            )}
+                            <div className="max-w-[100%] rounded-md bg-blue-500 p-2 text-white">
+                                {message.content && (
+                                    <div className="mb-2">
+                                        {message.content}
+                                    </div>
+                                )}
+                                {message.images &&
+                                    message.images.length > 0 && (
+                                        <div className="flex flex-wrap justify-start">
+                                            {message.images.map(
+                                                (imageUrl, index) => (
+                                                    <img
+                                                        key={index}
+                                                        src={imageUrl}
+                                                        alt={`Image ${index}`}
+                                                        className="message-image mb-2 mr-2 max-h-[200px] max-w-[200px] rounded-lg shadow-md"
+                                                    />
+                                                ),
+                                            )}
+                                        </div>
+                                    )}
+                            </div>
                         </div>
-                    )}
+                    </Popover>
     
                     <div className="mt-1 text-xs text-gray-500">
                         {new Date(message.timestamp).toLocaleString()}
                     </div>
+    
+                    {/* Images display */}
                 </div>
             )}
     
@@ -184,20 +202,24 @@ function MessageItem({ message, onReply, onDelete }) {
                 </div>
             </Modal>
         </div>
-    ); 
+    );
+    
 }
 
 export default MessageItem;
 
-const Options = ({ onReply, openModal }) => {
+const Options = ({ onReply, openModal, message }) => {
+    const { userVerified } = useAuth();
     return (
         <div className="flex space-x-2">
-            <button
-                onClick={() => openModal()}
-                className="flex items-center space-x-1 text-red-500"
-            >
-                <MdDelete />
-            </button>
+            {message.sender._id === userVerified._id && (
+                <button
+                    onClick={() => openModal()}
+                    className="flex items-center space-x-1 text-red-500"
+                >
+                    <MdDelete />
+                </button>
+            )}
             <button onClick={onReply} className="flex items-center space-x-1">
                 <FaReply />
             </button>
