@@ -16,7 +16,7 @@ function ChatHeader() {
     const [notifications, setNotifications] = useState([]);
     const [openNotification, setOpenNotification] = useState(false);
     const [openFriendList, setOpenFriendList] = useState(false);
-    console.log('User verified:', userVerified);
+    // console.log('User verified:', userVerified);
 
     // console.log('Notifications:', notifications);
 
@@ -45,7 +45,7 @@ function ChatHeader() {
         });
 
         socket.on('accepted-friend-request', async (response) => {
-            console.log('Accepted friend request:', response);
+            console.log('Accepted , rejected friend request:', response);
             const updatedUser = await userService.getUserById(userVerified._id);
             setUserVerified(updatedUser);
         });
@@ -83,8 +83,21 @@ function ChatHeader() {
         }
     };
 
-    const handleRejectFriendRequest = () => {
+    const handleRejectFriendRequest = async (requester) => {
         console.log('Reject friend request');
+        try {
+            const response = await userService.rejectedFriendRequest({
+                requesterId: requester._id,
+                userId: userVerified._id,
+            });
+
+            const userUpdated = await userService.getUserById(userVerified._id);
+            setUserVerified(userUpdated);
+
+            socket.emit('accept-friend-request', response);
+        } catch (error) {
+            console.error('Error accepting friend request:', error);
+        }
     };
 
     return (
@@ -188,8 +201,10 @@ function ChatHeader() {
                                                                 Accept
                                                             </button>
                                                             <button
-                                                                onClick={
-                                                                    handleRejectFriendRequest
+                                                                onClick={() =>
+                                                                    handleRejectFriendRequest(
+                                                                        request,
+                                                                    )
                                                                 }
                                                                 className="rounded-md bg-red-500 px-2 py-1 text-white  duration-75 hover:bg-red-600"
                                                             >
