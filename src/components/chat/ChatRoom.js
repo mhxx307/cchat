@@ -88,24 +88,23 @@ const ChatRoom = () => {
         console.log('Uploaded image URLs:', imageUrls);
 
         return imageUrls;
-    }
+    };
 
     const handleSendMessage = async () => {
         setLoading(true);
 
         try {
-            if (newMessage.trim() === '') {
+            if (newMessage.trim() === '' && selectedImages.length === 0) {
                 return;
             }
-    
+
             const imageUrls = await uploadToFirebase();
-           
-    
+
             if (selectedRoom.type === '1v1') {
                 const receiverId = selectedRoom.members.find(
                     (member) => member._id !== userVerified._id,
                 );
-    
+
                 const response = await chatService.sendMessage({
                     senderId: userVerified._id,
                     receiverId: receiverId,
@@ -114,11 +113,11 @@ const ChatRoom = () => {
                     roomId: selectedRoom._id,
                     replyMessageId: replyingMessage || null,
                 });
-    
+
                 setMessages([...messages, response]);
                 setNewMessage('');
                 setSelectedImages([]);
-    
+
                 socket.emit('send-message', {
                     savedMessage: response,
                 });
@@ -130,10 +129,10 @@ const ChatRoom = () => {
                     roomId: selectedRoom._id,
                     replyMessageId: replyingMessage || null,
                 });
-    
+
                 setMessages([...messages, response]);
                 setNewMessage('');
-    
+
                 socket.emit('send-message', {
                     savedMessage: response,
                 });
