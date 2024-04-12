@@ -174,13 +174,13 @@ const ChatRoom = () => {
         setReplyingMessage(message._id);
         console.log('Reply message:', message);
     };
-    
+
     const handleRemoveImage = (index) => {
         const newSelectedImages = [...selectedImages];
         newSelectedImages.splice(index, 1);
         setSelectedImages(newSelectedImages);
     };
-    
+
     const handleDelete = async (message) => {
         console.log('Delete message:', message);
         try {
@@ -210,6 +210,9 @@ const ChatRoom = () => {
                         </Modal>
                     </>
                 )}
+                {/* <VideoPlayer />
+                <Options />
+                <Notifications /> */}
             </div>
 
             <div className="mb-2 max-h-[60vh] flex-1 overflow-y-auto">

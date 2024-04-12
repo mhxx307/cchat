@@ -56,6 +56,13 @@ const userService = {
         );
         return result;
     },
+    rejectedFriendRequest: async ({ userId, requesterId }) => {
+        const result = await httpRequest.post(`/users/rejectedFriendRequest`, {
+            userId,
+            requesterId,
+        });
+        return result;
+    },
 };
 
 export default userService;

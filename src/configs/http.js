@@ -1,13 +1,18 @@
-import axios from "axios";
+import axios from 'axios';
+
+const productionLink = 'https://cong-nghe-moi-backend.onrender.com/api/v1';
+const developmentLink = 'http://localhost:8000/api/v1';
+const baseURL =
+    process.env.NODE_ENV === 'production' ? productionLink : developmentLink;
 
 class Http {
     instance;
     constructor() {
         this.instance = axios.create({
-            baseURL: "http://localhost:8000/api/v1",
+            baseURL: baseURL,
             timeout: 10000, // 10 seconds
             headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
             },
         });
 
