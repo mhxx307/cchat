@@ -84,7 +84,7 @@ function ChatHeader() {
     };
 
     const handleRejectFriendRequest = async (requester) => {
-        console.log('Reject friend request');
+        console.log('Reject friend request', requester);
         try {
             const response = await userService.rejectedFriendRequest({
                 requesterId: requester._id,

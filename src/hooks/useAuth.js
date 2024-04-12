@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext();
 
@@ -8,15 +8,24 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
     const [userForVerified, setUserForVerified] = useState(null);
-    const [userVerified, setUserVerifiedState] = useState(JSON.parse(localStorage.getItem("user")) || null);
+    const [userVerified, setUserVerifiedState] = useState(
+        JSON.parse(localStorage.getItem('user')) || null,
+    );
 
     const setUserVerified = (user) => {
         setUserVerifiedState(user);
-        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem('user', JSON.stringify(user));
     };
 
     return (
-        <AuthContext.Provider value={{ userForVerified, setUserForVerified, userVerified, setUserVerified }}>
+        <AuthContext.Provider
+            value={{
+                userForVerified,
+                setUserForVerified,
+                userVerified,
+                setUserVerified,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );

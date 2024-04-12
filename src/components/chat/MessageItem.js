@@ -147,21 +147,6 @@ function MessageItem({ message, onReply, onDelete }) {
                                         {message.content}
                                     </div>
                                 )}
-                                {message.images &&
-                                    message.images.length > 0 && (
-                                        <div className="flex flex-wrap justify-start">
-                                            {message.images.map(
-                                                (imageUrl, index) => (
-                                                    <img
-                                                        key={index}
-                                                        src={imageUrl}
-                                                        alt={`${index}`}
-                                                        className="message-image mb-2 mr-2 max-h-[200px] max-w-[200px] rounded-lg shadow-md"
-                                                    />
-                                                ),
-                                            )}
-                                        </div>
-                                    )}
                             </div>
                         </div>
                     </Popover>
@@ -171,6 +156,18 @@ function MessageItem({ message, onReply, onDelete }) {
                     </div>
 
                     {/* Images display */}
+                    {message.images && message.images.length > 0 && (
+                        <div className="flex flex-wrap justify-start">
+                            {message.images.map((imageUrl, index) => (
+                                <img
+                                    key={index}
+                                    src={imageUrl}
+                                    alt={`${index}`}
+                                    className="message-image mb-2 mr-2 max-h-[200px] max-w-[200px] rounded-lg shadow-md"
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 
