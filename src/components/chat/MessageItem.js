@@ -56,7 +56,7 @@ function MessageItem({ message, onReply, onDelete }) {
                             handleReferenceMessage={handleReferenceMessage}
                         />
                     )}
-
+    
                     <Popover
                         placement="left"
                         renderPopover={
@@ -67,9 +67,29 @@ function MessageItem({ message, onReply, onDelete }) {
                             />
                         }
                     >
-                        <div className="flex space-x-2">
-                            <div className="inline max-w-[100%] rounded-md bg-blue-500 p-2 text-white">
-                                {message.content}
+                        <div className="flex items-start justify-end space-x-2">
+                            {/* Container chứa cả hình ảnh hồ sơ và nội dung tin nhắn, căn phải */}
+                            <div className="max-w-[100%] rounded-md bg-blue-500 p-2 text-white">
+                                {message.content && (
+                                    <div className="mb-2">
+                                        {message.content}
+                                    </div>
+                                )}
+                                {message.images &&
+                                    message.images.length > 0 && (
+                                        <div className="flex flex-wrap justify-start">
+                                            {message.images.map(
+                                                (imageUrl, index) => (
+                                                    <img
+                                                        key={index}
+                                                        src={imageUrl}
+                                                        alt={`Image ${index}`}
+                                                        className="message-image mb-2 mr-2 max-h-[200px] max-w-[200px] rounded-lg shadow-md"
+                                                    />
+                                                ),
+                                            )}
+                                        </div>
+                                    )}
                             </div>
                             {message.sender.profilePic ? (
                                 <img
@@ -84,10 +104,12 @@ function MessageItem({ message, onReply, onDelete }) {
                             )}
                         </div>
                     </Popover>
-
+    
                     <div className="mt-1 text-xs text-gray-300">
                         {new Date(message.timestamp).toLocaleString()}
                     </div>
+    
+                    {/* Images display */}
                 </div>
             ) : (
                 <div className="mb-4 flex flex-col items-start">
@@ -98,7 +120,7 @@ function MessageItem({ message, onReply, onDelete }) {
                             handleReferenceMessage={handleReferenceMessage}
                         />
                     )}
-
+    
                     <Popover
                         placement="right"
                         renderPopover={
@@ -109,7 +131,8 @@ function MessageItem({ message, onReply, onDelete }) {
                             />
                         }
                     >
-                        <div className="flex space-x-2">
+                        <div className="flex items-start space-x-2">
+                            {/* Container chứa cả hình ảnh hồ sơ và nội dung tin nhắn */}
                             {message.sender.profilePic ? (
                                 <img
                                     src={message.sender.profilePic}
@@ -121,18 +144,39 @@ function MessageItem({ message, onReply, onDelete }) {
                                     name={message.sender.username}
                                 />
                             )}
-
-                            <div className="max-w-[100%] rounded-md bg-gray-300 p-2">
-                                {message.content}
+                            <div className="max-w-[100%] rounded-md bg-blue-500 p-2 text-white">
+                                {message.content && (
+                                    <div className="mb-2">
+                                        {message.content}
+                                    </div>
+                                )}
+                                {message.images &&
+                                    message.images.length > 0 && (
+                                        <div className="flex flex-wrap justify-start">
+                                            {message.images.map(
+                                                (imageUrl, index) => (
+                                                    <img
+                                                        key={index}
+                                                        src={imageUrl}
+                                                        alt={`Image ${index}`}
+                                                        className="message-image mb-2 mr-2 max-h-[200px] max-w-[200px] rounded-lg shadow-md"
+                                                    />
+                                                ),
+                                            )}
+                                        </div>
+                                    )}
                             </div>
                         </div>
                     </Popover>
+    
                     <div className="mt-1 text-xs text-gray-500">
                         {new Date(message.timestamp).toLocaleString()}
                     </div>
+    
+                    {/* Images display */}
                 </div>
             )}
-
+    
             {/* modal confirm delete */}
             <Modal
                 open={isDeleteModalOpen}
@@ -159,6 +203,7 @@ function MessageItem({ message, onReply, onDelete }) {
             </Modal>
         </div>
     );
+    
 }
 
 export default MessageItem;
