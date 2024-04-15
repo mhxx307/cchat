@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { InputField, Loading } from '~/components/shared';
 import { useAuth } from '~/hooks/useAuth';
 import authService from '~/services/authService';
+import socket from '~/configs/socket';
 
 const schema = yup.object({
     email: yup
@@ -45,6 +46,7 @@ function LoginPage() {
             if (result.user.verify) {
                 toast.success('Login successful');
                 setUserVerified(result.user);
+                socket.emit('join', { userId: result.user._id });
                 navigate('/chat');
             } else {
                 toast.error(result.message);

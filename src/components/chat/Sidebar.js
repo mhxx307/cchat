@@ -83,12 +83,7 @@ const Sidebar = () => {
     useEffect(() => {
         socket.on('updated-group', async (data) => {
             console.log('Received updated group:', data);
-
-            // Update the room list
-            const updatedRoomList = await chatService.getAllRoomByUserId(
-                userVerified._id,
-            );
-            setRoomList(updatedRoomList);
+            fetchUpdatedRooms();
         });
 
         return () => {

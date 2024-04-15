@@ -11,9 +11,10 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '~/configs/firebase';
 import { v4 } from 'uuid';
 import AddMembersModal from './AddMembersModal';
+import { useVideoCall } from '~/hooks/useVideoCall';
 
 const ChatRoom = () => {
-    const { selectedRoom, fetchUpdatedRooms } = useChat();
+    const { selectedRoom, fetchUpdatedRooms, setSelectedRoom } = useChat();
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -27,6 +28,7 @@ const ChatRoom = () => {
     const messagesEndRef = useRef(null);
     const [selectedImages, setSelectedImages] = useState([]);
     const [openModalInvite, setOpenModalInvite] = useState(false);
+    const { handleCallRequest } = useVideoCall();
 
     console.log('selectedImages', selectedImages);
 
@@ -60,6 +62,24 @@ const ChatRoom = () => {
 
         return () => {
             socket.off('receive-message');
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket]);
+
+    // listen for updated group
+    useEffect(() => {
+        socket.on('updated-group', (data) => {
+            console.log('Received updated group:', data);
+            fetchUpdatedRooms();
+
+            // updated selected room for modal real time
+            if (data._id.toString() === selectedRoom._id.toString()) {
+                setSelectedRoom(data);
+            }
+        });
+
+        return () => {
+            socket.off('updated-group');
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket]);
@@ -251,6 +271,11 @@ const ChatRoom = () => {
                     <button
                         onClick={() => {
                             console.log('Call video');
+                            handleCallRequest(
+                                selectedRoom.members.find(
+                                    (member) => member._id !== userVerified._id,
+                                ),
+                            );
                         }}
                     >
                         Call video

@@ -17,6 +17,7 @@ function GroupProfileModal() {
         raw: '',
     });
     const [loading, setLoading] = useState(false);
+    const [newAdmin, setNewAdmin] = useState('');
 
     console.log(selectedRoom);
 
@@ -29,7 +30,7 @@ function GroupProfileModal() {
                 name: groupName,
                 image: selectedRoom.image || '',
                 adminId: selectedRoom.admin._id,
-                newAdminId: selectedRoom.admin._id, // Assuming admin remains the same
+                newAdminId: newAdmin || selectedRoom.admin._id, // Assuming admin remains the same
             });
             setSelectedRoom(updatedRoom); // Assuming response contains updated room data
             setRoomList((prevRooms) =>
@@ -175,14 +176,35 @@ function GroupProfileModal() {
                                 )}
                                 <span className="ml-2">{member.username}</span>
                             </div>
+
+                            {selectedRoom.admin._id === member._id && (
+                                <p>Key</p>
+                            )}
+
                             {userVerified._id === selectedRoom.admin._id &&
                                 userVerified._id !== member._id && (
-                                    <button
-                                        className="text-red-500 hover:text-red-700"
-                                        onClick={() => removeMember(member._id)}
-                                    >
-                                        Remove
-                                    </button>
+                                    <>
+                                        {newAdmin === member._id ? (
+                                            <p>Key</p>
+                                        ) : (
+                                            <button
+                                                className="text-blue-500 hover:text-blue-700"
+                                                onClick={() => {
+                                                    setNewAdmin(member._id);
+                                                }}
+                                            >
+                                                Make Admin
+                                            </button>
+                                        )}
+                                        <button
+                                            className="text-red-500 hover:text-red-700"
+                                            onClick={() =>
+                                                removeMember(member._id)
+                                            }
+                                        >
+                                            Remove
+                                        </button>
+                                    </>
                                 )}
                         </li>
                     ))}
