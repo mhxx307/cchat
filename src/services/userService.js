@@ -63,6 +63,13 @@ const userService = {
         });
         return result;
     },
+    unfriend: async ({ userId, friendId }) => {
+        const result = await httpRequest.post(`/users/unfriend`, {
+            userId,
+            friendId,
+        });
+        return result;
+    },
 };
 
 export default userService;

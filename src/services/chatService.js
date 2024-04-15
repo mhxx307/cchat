@@ -71,6 +71,33 @@ const chatService = {
 
         return response;
     },
+    updateChatGroup: async ({
+        chatroomId,
+        members,
+        name,
+        image,
+        adminId,
+        newAdminId,
+    }) => {
+        const response = await httpRequest.post('/chat/updateChatGroup', {
+            chatroomId,
+            members,
+            name,
+            image,
+            adminId,
+            newAdminId,
+        });
+
+        return response;
+    },
+    removeChatroom: async ({ chatroomId, admin }) => {
+        const response = await httpRequest.post('/chat/removeChatroom', {
+            chatroomId,
+            admin,
+        });
+
+        return response;
+    },
 };
 
 export default chatService;

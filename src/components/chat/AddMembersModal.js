@@ -1,148 +1,130 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import socket from '~/configs/socket';
+// import socket from '~/configs/socket';
 import { useAuth } from '~/hooks/useAuth';
 import { useChat } from '~/hooks/useChat';
 import useDebounce from '~/hooks/useDebounce';
 import chatService from '~/services/chatService';
 import userService from '~/services/userService';
+import FriendListForInvite from './FriendListForInvite';
+import socket from '~/configs/socket';
 
-const AddMembersModal = () => {
+const AddMembersModal = ({ onCloseModal }) => {
     const { userVerified } = useAuth();
-    const [searchTermUser, setSearchTermUser] = useState('');
-    const [searchResults, setSearchResults] = useState([]);
-    const [selectedMembers, setSelectedMembers] = useState([]);
     const { selectedRoom, setSelectedRoom } = useChat();
-    const searchTermUserDebounce = useDebounce(searchTermUser, 500);
+    const [searchResults, setSearchResults] = useState([]);
+    const [friendList, setFriendList] = useState([]);
+    const [selectedUsers, setSelectedUsers] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
 
-    useEffect(() => {
-        // Fetch users when searchTermUser changes
-        const fetchUsers = async () => {
-            if (searchTermUserDebounce.trim() !== '') {
-                try {
-                    const result = await userService.getUsersBySearchTerms(
-                        searchTermUserDebounce,
-                    );
-                    // Remove the current user from the search results
-                    const filteredResult = result.filter(
-                        (user) => user._id !== userVerified._id,
-                    );
+    const searchTermDebounce = useDebounce(searchTerm, 500);
 
-                    //remove the users that are already in the group
-                    const members = selectedRoom.group.members;
-                    const filteredResult2 = filteredResult.filter(
-                        (user) => !members.includes(user._id),
-                    );
-
-                    setSearchResults(filteredResult2);
-                } catch (error) {
-                    console.error('Error fetching users:', error);
-                }
-            } else {
-                setSearchResults([]);
-            }
-        };
-
-        fetchUsers();
-    }, [searchTermUserDebounce, userVerified._id, selectedRoom.group.members]);
-
-    const handleAddMember = (member) => {
-        setSelectedMembers([...selectedMembers, member]);
-        // Clear the search input
-        setSearchTermUser('');
-    };
-
-    const handleRemoveMember = (member) => {
-        setSelectedMembers(
-            selectedMembers.filter((selected) => selected.id !== member.id),
-        );
-    };
-
-    const handleSaveMembers = async () => {
-        const newMembersId = [
-            ...selectedRoom.group.members,
-            ...selectedMembers.map((member) => member._id),
-        ];
-        const newMembers = [...selectedRoom.group.members, ...selectedMembers];
-        console.log(selectedMembers);
-        console.log('members', newMembers);
-
+    const fetchFriendList = async () => {
         try {
-            await chatService.updateGroup({
-                groupId: selectedRoom.group._id,
-                name: selectedRoom.group.name,
-                members: newMembersId,
-                profilePic: selectedRoom.group.profilePic,
-            });
-
-            // Update the selected room with the new members
-            setSelectedRoom((prevRoom) => ({
-                ...prevRoom,
-                group: {
-                    ...prevRoom.group,
-                    members: newMembers,
-                },
-                members: newMembers,
-            }));
-
-            // real-time update
-            socket.emit('addMembers', {
-                message: `
-                ${userVerified.username} added new members to the group"
-            `,
-            });
+            const response = await userService.getFriendList(userVerified._id);
+            // filter out the current members of the room
+            const filteredList = response.filter(
+                (user) =>
+                    !selectedRoom.members.some(
+                        (member) => member._id === user._id,
+                    ),
+            );
+            setFriendList(filteredList);
         } catch (error) {
-            console.error('Error updating group:', error);
-            toast.error('Error adding members');
-        } finally {
-            // Clear the selected members
-            setSelectedMembers([]);
+            console.error('Error fetching friend list:', error);
+        }
+    };
+
+    // Fetch friend list
+    useEffect(() => {
+        fetchFriendList();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userVerified]);
+
+    // Function to fetch users based on search term
+    useEffect(() => {
+        if (searchTermDebounce.trim() !== '') {
+            const result = friendList.filter((user) =>
+                user.username
+                    .toLowerCase()
+                    .includes(searchTermDebounce.toLowerCase()),
+            );
+            setSearchResults(result);
+        } else {
+            setSearchResults([]);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchTermDebounce]);
+
+    // Function to toggle user selection
+    const toggleUserSelection = (user) => {
+        const isSelected = selectedUsers.some((u) => u._id === user._id);
+        if (isSelected) {
+            setSelectedUsers(selectedUsers.filter((u) => u._id !== user._id));
+        } else {
+            setSelectedUsers([...selectedUsers, user]);
+        }
+    };
+
+    // Function to remove selected user
+    const removeSelectedUser = (userId) => {
+        setSelectedUsers(selectedUsers.filter((user) => user._id !== userId));
+    };
+
+    // Function to handle search input with debounce
+    const handleSearchChange = (e) => {
+        const term = e.target.value;
+        setSearchTerm(term);
+    };
+
+    const handleAddMembers = async () => {
+        try {
+            const updatedRoom = await chatService.updateChatGroup({
+                chatroomId: selectedRoom._id,
+                name: selectedRoom.name,
+                image: selectedRoom.image,
+                members: [
+                    ...selectedRoom.members.map((member) => member._id),
+                    ...selectedUsers.map((user) => user._id),
+                ],
+                adminId: selectedRoom.admin._id,
+            });
+
+            setSelectedRoom(updatedRoom);
+            socket.emit('update-group', updatedRoom);
+
             toast.success('Members added successfully');
+        } catch (error) {
+            console.error('Error adding members:', error);
+            toast.error('Failed to add members');
+        } finally {
+            setSelectedUsers([]);
+            onCloseModal();
         }
     };
 
     return (
-        <div className="items-center justify-center bg-gray-800 bg-opacity-50">
-            <div className="w-96 rounded-lg bg-white p-4">
-                <input
-                    type="text"
-                    placeholder="Search members"
-                    className="mb-4 w-full rounded-lg border border-gray-300 px-4 py-2"
-                    value={searchTermUser}
-                    onChange={(e) => setSearchTermUser(e.target.value)}
-                />
-                <div className="mb-4 max-h-48 overflow-y-auto">
-                    {searchResults.map((user) => (
-                        <div
-                            key={user._id}
-                            className="flex cursor-pointer items-center justify-between px-2 py-2 hover:bg-gray-100"
-                            onClick={() => handleAddMember(user)}
-                        >
-                            <span>{user.username}</span>
-                            <span>+</span>
-                        </div>
-                    ))}
-                </div>
-                <div className="mb-4">
-                    <h2>Selected Members:</h2>
-                    {selectedMembers.map((member) => (
-                        <div
-                            key={member._id}
-                            className="mb-2 flex items-center justify-between rounded-lg bg-gray-100 px-2 py-2"
-                        >
-                            <span>{member.username}</span>
-                            <button
-                                onClick={() => handleRemoveMember(member)}
-                                className="text-red-500"
-                            >
-                                Remove
-                            </button>
-                        </div>
-                    ))}
-                </div>
+        <div className="min-w-[500px]">
+            <input
+                type="text"
+                className="mb-4 w-full rounded border border-gray-300 px-4 py-2 focus:outline-none"
+                placeholder="Search Users"
+                onChange={handleSearchChange}
+            />
+
+            <FriendListForInvite
+                friendList={friendList}
+                searchTermDebounce={searchTerm}
+                searchResults={searchResults}
+                selectedUsers={selectedUsers}
+                toggleUserSelection={toggleUserSelection}
+                removeSelectedUser={removeSelectedUser}
+            />
+
+            <div className="mt-4 flex justify-end">
                 <button
-                    className="w-full rounded-lg bg-blue-500 px-4 py-2 text-white"
-                    onClick={() => handleSaveMembers()}
+                    className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none"
+                    onClick={handleAddMembers}
                 >
                     Add Members
                 </button>

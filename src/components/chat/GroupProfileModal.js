@@ -12,45 +12,120 @@ function GroupProfileModal() {
     const { selectedRoom, setSelectedRoom, setRoomList } = useChat();
     const [groupName, setGroupName] = useState(selectedRoom.name);
     const [members, setMembers] = useState(selectedRoom.members);
-    const [image, setImage] = useState(null);
+    const [image, setImage] = useState({
+        preview: selectedRoom.image,
+        raw: '',
+    });
     const [loading, setLoading] = useState(false);
 
-    const handleSave = async () => {};
+    console.log(selectedRoom);
 
-    const removeMember = (memberId) => {
-        // Implement logic to remove a member from the group
-        // You can use APIs or other methods to perform this action
-        // After removing the member, you can handle the UI or redirect the user accordingly
+    const handleSave = async () => {
+        setLoading(true);
+        try {
+            const updatedRoom = await chatService.updateChatGroup({
+                chatroomId: selectedRoom._id,
+                members,
+                name: groupName,
+                image: selectedRoom.image || '',
+                adminId: selectedRoom.admin._id,
+                newAdminId: selectedRoom.admin._id, // Assuming admin remains the same
+            });
+            setSelectedRoom(updatedRoom); // Assuming response contains updated room data
+            setRoomList((prevRooms) =>
+                prevRooms.map((room) =>
+                    room._id === updatedRoom._id ? updatedRoom : room,
+                ),
+            );
+            toast.success('Group updated successfully');
+
+            // Emit event to update group details in other clients
+            socket.emit('update-group', updatedRoom);
+        } catch (error) {
+            console.error('Error updating group:', error);
+            toast.error('Failed to update group');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const removeMember = async (memberId) => {
+        const updatedMembers = members.filter(
+            (member) => member._id !== memberId,
+        );
+        setMembers(updatedMembers);
     };
 
     const handleLeaveGroup = async () => {
         // Implement logic to leave the group
         // You can use APIs or other methods to perform this action
         // After leaving the group, you can handle the UI or redirect the user accordingly
+        setLoading(true);
+        try {
+            await chatService.updateChatGroup({
+                chatroomId: selectedRoom._id,
+                members: members.filter(
+                    (member) => member._id !== userVerified._id,
+                ),
+                name: groupName,
+                image: selectedRoom.image || '',
+                adminId: selectedRoom.admin._id,
+                newAdminId: selectedRoom.admin._id,
+            });
+            setSelectedRoom(null);
+            setRoomList((prevRooms) =>
+                prevRooms.filter((room) => room._id !== selectedRoom._id),
+            );
+            toast.success('Left group successfully');
+        } catch (error) {
+            console.error('Error leaving group:', error);
+            toast.error('Failed to leave group');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleImageChange = (event) => {
-        // Handle image selection
         const file = event.target.files[0];
-        setImage(file);
+        setImage({
+            preview: URL.createObjectURL(file),
+            raw: file,
+        });
     };
 
-    const handleRemoveGroup = async () => {};
+    const handleRemoveGroup = async () => {
+        setLoading(true);
+        try {
+            await chatService.removeChatroom({
+                chatroomId: selectedRoom._id,
+                admin: selectedRoom.admin._id,
+            });
+            setRoomList((prevRooms) =>
+                prevRooms.filter((room) => room._id !== selectedRoom._id),
+            );
+            setSelectedRoom(null);
+
+            // Emit event to remove group from other clients
+            socket.emit('update-group', {
+                _id: selectedRoom._id,
+            });
+            toast.success('Group removed successfully');
+        } catch (error) {
+            console.error('Error removing group:', error);
+            toast.error('Failed to remove group');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="mb-4 w-[400px] space-y-4 rounded bg-white px-8 pb-8 pt-6">
             <div className="flex items-center">
                 <label htmlFor="imageUpload" className="cursor-pointer">
-                    {image ? (
+                    {image.preview ? (
                         <img
-                            src={URL.createObjectURL(image)}
+                            src={image.preview}
                             alt="Group Avatar"
-                            className="h-8 w-8 rounded-full"
-                        />
-                    ) : selectedRoom.image ? (
-                        <img
-                            src={selectedRoom.image}
-                            alt="Avatar"
                             className="h-8 w-8 rounded-full"
                         />
                     ) : (
@@ -114,7 +189,7 @@ function GroupProfileModal() {
                 </ul>
             </div>
             <div className="flex items-center justify-between">
-                {userVerified._id === selectedRoom.admin ? (
+                {userVerified._id === selectedRoom.admin._id ? (
                     <button
                         className="focus:shadow-outline rounded bg-red-500 px-4 py-2 font-bold text-white hover:bg-red-700 focus:outline-none"
                         onClick={handleRemoveGroup}

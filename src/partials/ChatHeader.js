@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import notificationService from '~/services/notificationService';
 import socket from '~/configs/socket';
 import userService from '~/services/userService';
+import Modal from 'react-responsive-modal';
 
 function ChatHeader() {
     const { isDarkMode, toggleDarkMode } = useTheme();
@@ -16,6 +17,12 @@ function ChatHeader() {
     const [notifications, setNotifications] = useState([]);
     const [openNotification, setOpenNotification] = useState(false);
     const [openFriendList, setOpenFriendList] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    const openModal = () => {
+        setIsDeleteModalOpen(true);
+    };
+
     // console.log('User verified:', userVerified);
 
     // console.log('Notifications:', notifications);
@@ -97,6 +104,22 @@ function ChatHeader() {
             socket.emit('accept-friend-request', response);
         } catch (error) {
             console.error('Error accepting friend request:', error);
+        }
+    };
+
+    const handleUnfriend = async (friendId) => {
+        try {
+            const response = await userService.unfriend({
+                userId: userVerified._id,
+                friendId: friendId,
+            });
+
+            const userUpdated = await userService.getUserById(userVerified._id);
+            setUserVerified(userUpdated);
+
+            socket.emit('received-friend-request', response);
+        } catch (error) {
+            console.error('Error unfriending:', error);
         }
     };
 
@@ -224,9 +247,17 @@ function ChatHeader() {
                                                 (friend) => (
                                                     <li
                                                         key={friend._id}
-                                                        className="mb-2"
+                                                        className="mb-2 flex items-center justify-between"
                                                     >
                                                         <p>{friend.username}</p>
+                                                        <button
+                                                            onClick={() =>
+                                                                openModal()
+                                                            }
+                                                            className="rounded-md bg-red-500 px-2 py-1 text-white  duration-75 hover:bg-red-600"
+                                                        >
+                                                            Unfriend
+                                                        </button>
                                                     </li>
                                                 ),
                                             )}
@@ -245,6 +276,31 @@ function ChatHeader() {
                     </ul>
                 </nav>
             </div>
+
+            {/* modal confirm delete */}
+            <Modal
+                open={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                center
+            >
+                <div className="p-4">
+                    <h2>Are you sure you want to delete this message?</h2>
+                    <div className="flex justify-end space-x-2">
+                        <button
+                            onClick={() => setIsDeleteModalOpen(false)}
+                            className="rounded-md bg-gray-300 p-2"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleUnfriend}
+                            className="rounded-md bg-red-500 p-2 text-white"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </header>
     );
 }

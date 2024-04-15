@@ -10,6 +10,7 @@ import Modal from 'react-responsive-modal';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '~/configs/firebase';
 import { v4 } from 'uuid';
+import AddMembersModal from './AddMembersModal';
 
 const ChatRoom = () => {
     const { selectedRoom, fetchUpdatedRooms } = useChat();
@@ -25,6 +26,7 @@ const ChatRoom = () => {
     const onCloseModal = () => setOpen(false);
     const messagesEndRef = useRef(null);
     const [selectedImages, setSelectedImages] = useState([]);
+    const [openModalInvite, setOpenModalInvite] = useState(false);
 
     console.log('selectedImages', selectedImages);
 
@@ -58,6 +60,21 @@ const ChatRoom = () => {
 
         return () => {
             socket.off('receive-message');
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket]);
+
+    // listen for deleted messages
+    useEffect(() => {
+        socket.on('deleted-message', (data) => {
+            console.log('Received deleted message:', data);
+            setMessages((prevMessages) =>
+                prevMessages.filter((msg) => msg._id !== data.messageId),
+            );
+        });
+
+        return () => {
+            socket.off('deleted-message');
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket]);
@@ -171,7 +188,7 @@ const ChatRoom = () => {
     const handleReply = (message) => {
         setIsReplying(true);
         setReplyingMessage(message._id);
-        console.log('Reply message:', message);
+        // console.log('Reply message:', message);
     };
 
     const handleRemoveImage = (index) => {
@@ -181,37 +198,81 @@ const ChatRoom = () => {
     };
 
     const handleDelete = async (message) => {
-        console.log('Delete message:', message);
+        // console.log('Delete message:', message);
         try {
             await chatService.deleteMessage(message._id);
             const updatedMessages = messages.filter(
                 (msg) => msg._id !== message._id,
             );
             setMessages(updatedMessages);
+
+            socket.emit('delete-message', {
+                messageId: message._id,
+            });
         } catch (error) {
             console.error('Error deleting message:', error);
         }
     };
 
+    const handleOpenInviteModal = () => {
+        setOpenModalInvite(true);
+    };
+
+    const onCloseModalInvite = () => {
+        setOpenModalInvite(false);
+    };
+
     return (
         <div className="flex h-[80vh] flex-col justify-between rounded-md bg-gray-100 px-3 pb-2 md:h-full">
-            <div className="">
-                {selectedRoom.type === '1v1' && (
-                    <h2 className="">Chatting in</h2>
-                )}
-                {selectedRoom.type === 'group' && (
+            <div className="flex justify-between">
+                <div className="flex space-x-4">
+                    {selectedRoom.type === '1v1' && (
+                        <h2 className="">
+                            Chatting in with{' '}
+                            {
+                                selectedRoom.members.find(
+                                    (member) => member._id !== userVerified._id,
+                                ).username
+                            }
+                        </h2>
+                    )}
+
+                    {selectedRoom.type === 'group' && (
+                        <>
+                            <button onClick={handleOpenAddGroupModal}>
+                                {selectedRoom.name}
+                            </button>
+                            <Modal open={open} onClose={onCloseModal} center>
+                                <GroupProfileModal />
+                            </Modal>
+                        </>
+                    )}
+
+                    <button
+                        onClick={() => {
+                            console.log('Call video');
+                        }}
+                    >
+                        Call video
+                    </button>
+                </div>
+
+                {selectedRoom?.admin?._id === userVerified._id && (
                     <>
-                        <h3 onClick={handleOpenAddGroupModal}>
-                            {selectedRoom.name}
-                        </h3>
-                        <Modal open={open} onClose={onCloseModal} center>
-                            <GroupProfileModal />
+                        <button onClick={handleOpenInviteModal}>
+                            invite people
+                        </button>
+                        <Modal
+                            open={openModalInvite}
+                            onClose={onCloseModalInvite}
+                            center
+                        >
+                            <AddMembersModal
+                                onCloseModal={onCloseModalInvite}
+                            />
                         </Modal>
                     </>
                 )}
-                {/* <VideoPlayer />
-                <Options />
-                <Notifications /> */}
             </div>
 
             <div className="mb-2 max-h-[60vh] flex-1 overflow-y-auto">

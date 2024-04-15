@@ -79,6 +79,24 @@ const Sidebar = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket]);
 
+    // listen for updated group
+    useEffect(() => {
+        socket.on('updated-group', async (data) => {
+            console.log('Received updated group:', data);
+
+            // Update the room list
+            const updatedRoomList = await chatService.getAllRoomByUserId(
+                userVerified._id,
+            );
+            setRoomList(updatedRoomList);
+        });
+
+        return () => {
+            socket.off('updated-group');
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket]);
+
     const handleUserSelect = async (user) => {
         try {
             // Create a chat room with the selected user

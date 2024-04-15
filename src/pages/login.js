@@ -114,7 +114,7 @@ function LoginPage() {
                                 />
                             </div>
                             <div className="flex items-center justify-between">
-                                <div className="flex items-start">
+                                {/* <div className="flex items-start">
                                     <div className="flex h-5 items-center">
                                         <input
                                             id="remember"
@@ -132,7 +132,7 @@ function LoginPage() {
                                             Remember me
                                         </label>
                                     </div>
-                                </div>
+                                </div> */}
                                 <Link
                                     to="/forgot-password"
                                     className="text-primary-600 dark:text-primary-500 text-sm font-medium hover:underline"
