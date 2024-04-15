@@ -38,9 +38,9 @@ export const VideoCallProvider = ({ children }) => {
     }, [socket]);
 
     useEffect(() => {
-        socket.on('call-accepted', ({ recipient }) => {
+        socket.on('call-accepted', ({ recipient, caller }) => {
             // navigate to localhost:3000/via/:channelName
-            navigate(`/via/${recipient._id}`);
+            navigate(`/via/${caller._id}`);
         });
 
         return () => {
