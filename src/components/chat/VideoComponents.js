@@ -95,14 +95,11 @@ export const LiveVideo = () => {
     return (
         <>
             <div id="remoteVideoGrid">
-                {
-                    // Initialize each remote stream using RemoteUser component
-                    remoteUsers.map((user) => (
-                        <div key={user.uid} className="remote-video-container">
-                            <RemoteUser user={user} />
-                        </div>
-                    ))
-                }
+                {remoteUsers.map((user) => (
+                    <div key={user.uid} className="remote-video-container">
+                        <RemoteUser user={user} />
+                    </div>
+                ))}
             </div>
             <div id="localVideo">
                 <LocalUser
@@ -114,34 +111,30 @@ export const LiveVideo = () => {
                     playVideo={cameraOn}
                     className=""
                 />
-                <div>
-                    {/* media-controls toolbar component - UI controling mic, camera, & connection state  */}
-                    <div id="controlsToolbar">
-                        <div id="mediaControls">
-                            <button
-                                className="btn"
-                                onClick={() => setMic((a) => !a)}
-                            >
-                                Mic
-                            </button>
-                            <button
-                                className="btn"
-                                onClick={() => setCamera((a) => !a)}
-                            >
-                                Camera
-                            </button>
-                        </div>
+                <div id="controlsToolbar">
+                    <div id="mediaControls">
                         <button
-                            id="endConnection"
-                            onClick={() => {
-                                setActiveConnection(false);
-                                navigate('/');
-                            }}
+                            className={`control-btn ${micOn ? 'active' : ''}`}
+                            onClick={() => setMic(!micOn)}
                         >
-                            {' '}
-                            Disconnect
+                            Mic
+                        </button>
+                        <button
+                            className={`control-btn ${cameraOn ? 'active' : ''}`}
+                            onClick={() => setCamera(!cameraOn)}
+                        >
+                            Camera
                         </button>
                     </div>
+                    <button
+                        id="endConnection"
+                        onClick={() => {
+                            setActiveConnection(false);
+                            navigate('/');
+                        }}
+                    >
+                        Disconnect
+                    </button>
                 </div>
             </div>
         </>

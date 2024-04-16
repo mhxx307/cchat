@@ -21,78 +21,76 @@
     background: #f1f1f1;
 }
 
+/* live video */
+/* Add custom CSS for Messenger-like UI */
 .card {
-    padding: 2em;
+    padding: 20px;
+    background-color: #f0f2f5;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.read-the-docs {
-    color: #888;
-}
-
-#channelName {
-    display: block;
-    padding: 15px;
-    margin: 0 0 25px;
-    width: 50vw;
-    max-width: 500px;
-}
-
-.card button:hover {
-    border-color: #099dfd;
-    background-color: #099dfd;
-}
-
-#controlsToolbar {
-    bottom: 35px;
-    right: 35px;
-    position: fixed;
-    z-index: 99;
-}
-
-#mediaControls button {
-    margin: 0 5px 7.5px;
-    padding: 10px;
-}
-
-#mediaControls button:hover {
-    border-color: #099dfd;
-}
-
-#endConnection {
-    border-color: red;
-    opacity: 50%;
-}
-
-#endConnection:hover {
-    background-color: red;
-    border-color: white;
-    opacity: 100%;
-}
-
-#localVideo {
-    width: 50vw;
-    aspect-ratio: 16/9;
-    max-width: 480px;
-    min-width: 360px;
-    position: fixed;
-    right: 25px;
-    bottom: 25px;
-    margin: 0;
+.error-msg {
+    color: red;
 }
 
 #remoteVideoGrid {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
-    /* justify-content: center; */
-    align-items: center;
+    justify-content: center;
 }
 
 .remote-video-container {
     position: relative;
-    width: 25vw;
-    aspect-ratio: 4/3;
-    max-width: 720px;
-    min-width: 360px;
+    width: 30vw;
+    aspect-ratio: 16/9;
+    max-width: 320px;
+    min-width: 240px;
     overflow: hidden;
+}
+
+#localVideo {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+#controlsToolbar {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+}
+
+#mediaControls button {
+    padding: 10px;
+    margin-right: 10px;
+    background-color: #f0f2f5;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#mediaControls button.active {
+    background-color: #0084ff;
+    color: #fff;
+    border-color: #0084ff;
+}
+
+#endConnection {
+    padding: 10px 20px;
+    background-color: #ff3b30;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-left: auto;
+}
+
+#endConnection:hover {
+    background-color: #cc2d23;
 }
