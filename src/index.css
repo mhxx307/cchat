@@ -51,12 +51,14 @@
 }
 
 #localVideo {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 50vw;
+    aspect-ratio: 16/9;
+    max-width: 480px;
+    min-width: 360px;
+    position: fixed;
+    right: 25px;
+    bottom: 25px;
+    margin: 0;
 }
 
 #controlsToolbar {
