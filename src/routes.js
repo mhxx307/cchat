@@ -11,6 +11,7 @@ import VerifyOtp from "./pages/verify-otp";
 import PhoneLogin from "./pages/phone-login";
 import SettingsPage from "./pages/settings";
 import { useAuth } from "./hooks/useAuth";
+import ChangePassword from "./pages/change-password";
 
 function ProtectedRoute({ children }) {
     const { userVerified } = useAuth();
@@ -118,6 +119,15 @@ const routes = [
         element: (
             <MainLayout>
                 <PhoneLogin />
+            </MainLayout>
+        ),
+    },
+    {
+        path: "/change-password",
+        index: true,
+        element: (
+            <MainLayout>
+                <ChangePassword />
             </MainLayout>
         ),
     },

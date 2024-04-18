@@ -177,6 +177,7 @@ const ChatRoom = () => {
         } catch (error) {
             console.error('Error sending message:', error);
         } finally {
+            setSelectedImages([]);
             setLoading(false);
             fetchUpdatedRooms();
             setReplyingMessage(null);

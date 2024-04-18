@@ -13,6 +13,7 @@ import {
 import { storage } from '~/configs/firebase';
 import { v4 } from 'uuid';
 import { createAttachmentUrl } from '~/utils/index';
+import { Link } from 'react-router-dom';
 
 function Settings() {
     const { userVerified, setUserVerified } = useAuth();
@@ -231,6 +232,9 @@ function Settings() {
                     )}{' '}
                 </button>{' '}
             </form>{' '}
+            <Link to="/change-password" className="mt-4 text-blue-500 block">
+                Change Password{' '}   
+            </Link>{' '}
         </div>
     );
 }

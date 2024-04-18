@@ -7,6 +7,9 @@ import chatService from '~/services/chatService';
 import userService from '~/services/userService';
 import { toast } from 'react-toastify';
 import FriendListForInvite from './FriendListForInvite';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '~/configs/firebase';
+import { v4 } from 'uuid';
 
 const AddGroupModal = ({ onCloseModal, userVerified }) => {
     // State variables
@@ -18,6 +21,7 @@ const AddGroupModal = ({ onCloseModal, userVerified }) => {
     const { setRoomList } = useChat();
     const [searchResults, setSearchResults] = useState([]);
     const searchTermDebounce = useDebounce(searchTerm, 500);
+    const [image, setImage] = useState({ preview: '', raw: '' });
 
     const fetchFriendList = async () => {
         try {
@@ -58,6 +62,12 @@ const AddGroupModal = ({ onCloseModal, userVerified }) => {
     const handleGroupImageChange = (e) => {
         const imageFile = e.target.files[0];
         setGroupImage(imageFile);
+
+        // Create object URL for preview
+        const imageUrl = URL.createObjectURL(imageFile);
+
+        // Update image state with both preview and raw image
+        setImage({ preview: imageUrl, raw: imageFile });
     };
 
     // Function to toggle user selection
@@ -68,6 +78,18 @@ const AddGroupModal = ({ onCloseModal, userVerified }) => {
         } else {
             setSelectedUsers([...selectedUsers, user]);
         }
+    };
+
+    const uploadToFirebase = async () => {
+        const imageFile = image.raw;
+            // Tạo một reference đến vị trí lưu trữ trên Firebase Storage, có thể dùng tên file hoặc unique ID (ví dụ: UUID)
+            const imageRef = ref(storage, `imagesGroup/${imageFile?.name + v4()}`);
+            // Thực hiện tải lên ảnh vào Firebase Storage
+            const snapshot = await uploadBytes(imageRef, imageFile);
+            // Lấy đường dẫn tải xuống (URL) của ảnh đã tải lên
+            const imageUrl = await getDownloadURL(snapshot.ref);
+
+            return imageUrl;
     };
 
     // Function to remove selected user
@@ -86,6 +108,10 @@ const AddGroupModal = ({ onCloseModal, userVerified }) => {
                 toast.error('Please select at least 3 user');
                 return;
             } else {
+                let groupImage = '';
+                if (image.raw) {
+                    groupImage = await uploadToFirebase();
+                }
                 const response = await chatService.createChatRoom({
                     members,
                     type: 'group',
@@ -121,20 +147,25 @@ const AddGroupModal = ({ onCloseModal, userVerified }) => {
                 <h2 className="mb-4 text-2xl font-semibold">
                     Create New Group
                 </h2>
-
-                <div className="mb-4 flex items-center">
-                    <label
-                        htmlFor="group-image"
-                        className="mr-4 flex cursor-pointer items-center justify-center rounded-full bg-gray-300 p-4 hover:bg-gray-400"
-                    >
-                        <FaCamera className="text-xl" />
-                        <input
-                            type="file"
-                            id="group-image"
-                            className="hidden"
-                            onChange={handleGroupImageChange}
-                        />
+                <div className="mb-4 flex items-center space-x-2">
+                    <label htmlFor="imageUpload" className="cursor-pointer">
+                        {image.preview ? (
+                            <img
+                                src={image.preview}
+                                alt="Group Avatar"
+                                className="h-8 w-8 rounded-full"
+                            />
+                        ) : (
+                            <FaCamera />
+                        )}
                     </label>
+                    <input
+                        type="file"
+                        id="imageUpload"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleGroupImageChange}
+                    />
                     <input
                         type="text"
                         className="flex-1 rounded border border-gray-300 px-4 py-2 focus:outline-none"
