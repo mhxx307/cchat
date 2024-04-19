@@ -65,7 +65,7 @@ const Sidebar = () => {
     useEffect(() => {
         socket.on('created-room', (data) => {
             console.log('Received created room event:', data);
-            setRoomList([...roomList, data.createdRoom]);
+            setRoomList((prevRoomList) => [...prevRoomList, data.createdRoom]);
         });
 
         socket.on('sorted-room', (data) => {
@@ -75,19 +75,6 @@ const Sidebar = () => {
         return () => {
             socket.off('created-room');
             socket.off('sorted-room');
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [socket]);
-
-    // listen for updated group
-    useEffect(() => {
-        socket.on('updated-group', async (data) => {
-            console.log('Received updated group:', data);
-            fetchUpdatedRooms();
-        });
-
-        return () => {
-            socket.off('updated-group');
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket]);

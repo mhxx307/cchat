@@ -4,6 +4,9 @@ import Sidebar from '~/components/chat/Sidebar';
 import { useChat } from '~/hooks/useChat';
 import { useVideoCall } from '~/hooks/useVideoCall';
 import Modal from 'react-responsive-modal';
+import { useEffect } from 'react';
+import socket from '~/configs/socket';
+import chatService from '~/services/chatService';
 
 function ChatPage() {
     const { selectedRoom, isSidebarVisible } = useChat();
@@ -15,6 +18,25 @@ function ChatPage() {
         showIsCalling,
         onCloseModalIsCalling,
     } = useVideoCall();
+    const { setSelectedRoom, fetchUpdatedRooms } = useChat();
+
+    useEffect(() => {
+        socket.on('updated-group', async (data) => {
+            console.log('Received updated group:', data);
+            fetchUpdatedRooms();
+
+            // updated selected room for modal real time
+            if (selectedRoom?._id === data._id) {
+                const response = await chatService.getChatroomById(data._id);
+                setSelectedRoom(response);
+            }
+        });
+
+        return () => {
+            socket.off('updated-group');
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket]);
 
     const renderChatRoom = () => {
         return (

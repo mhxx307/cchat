@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import FallbackAvatar from '../shared/FallbackAvatar';
 import { useAuth } from '~/hooks/useAuth';
 import chatService from '~/services/chatService';
@@ -10,14 +10,35 @@ import socket from '~/configs/socket';
 function GroupProfileModal() {
     const { userVerified } = useAuth();
     const { selectedRoom, setSelectedRoom, setRoomList } = useChat();
-    const [groupName, setGroupName] = useState(selectedRoom.name);
-    const [members, setMembers] = useState(selectedRoom.members);
+    const [groupName, setGroupName] = useState('');
+    const [members, setMembers] = useState([]);
     const [image, setImage] = useState({
         preview: selectedRoom.image,
         raw: '',
     });
     const [loading, setLoading] = useState(false);
     const [newAdmin, setNewAdmin] = useState('');
+
+    useEffect(() => {
+        setGroupName(selectedRoom.name);
+        setMembers(selectedRoom.members);
+        setImage({
+            preview: selectedRoom.image,
+            raw: '',
+        });
+    }, [selectedRoom]);
+
+    useEffect(() => {
+        socket.on('left-group', async (data) => {
+            console.log('Received left group:', data);
+            setSelectedRoom(data);
+        });
+
+        return () => {
+            socket.off('left-group');
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket]);
 
     console.log(selectedRoom);
 
@@ -63,7 +84,7 @@ function GroupProfileModal() {
         // After leaving the group, you can handle the UI or redirect the user accordingly
         setLoading(true);
         try {
-            await chatService.updateChatGroup({
+            const updatedRoom = await chatService.updateChatGroup({
                 chatroomId: selectedRoom._id,
                 members: members.filter(
                     (member) => member._id !== userVerified._id,
@@ -77,6 +98,9 @@ function GroupProfileModal() {
             setRoomList((prevRooms) =>
                 prevRooms.filter((room) => room._id !== selectedRoom._id),
             );
+
+            socket.emit('update-group', updatedRoom);
+            socket.emit('leave-group', updatedRoom);
             toast.success('Left group successfully');
         } catch (error) {
             console.error('Error leaving group:', error);
@@ -226,13 +250,15 @@ function GroupProfileModal() {
                         Leave Group
                     </button>
                 )}
-                <button
-                    className="focus:shadow-outline rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700 focus:outline-none"
-                    onClick={handleSave}
-                    disabled={loading}
-                >
-                    {loading ? <Loading /> : 'Save'}
-                </button>
+                {userVerified._id === selectedRoom.admin._id && (
+                    <button
+                        className="focus:shadow-outline rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700 focus:outline-none"
+                        onClick={handleSave}
+                        disabled={loading}
+                    >
+                        {loading ? <Loading /> : 'Save'}
+                    </button>
+                )}
             </div>
         </div>
     );

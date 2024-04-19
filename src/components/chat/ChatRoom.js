@@ -14,7 +14,7 @@ import AddMembersModal from './AddMembersModal';
 import { useVideoCall } from '~/hooks/useVideoCall';
 
 const ChatRoom = () => {
-    const { selectedRoom, fetchUpdatedRooms, setSelectedRoom } = useChat();
+    const { selectedRoom, fetchUpdatedRooms } = useChat();
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -62,24 +62,6 @@ const ChatRoom = () => {
 
         return () => {
             socket.off('receive-message');
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [socket]);
-
-    // listen for updated group
-    useEffect(() => {
-        socket.on('updated-group', (data) => {
-            console.log('Received updated group:', data);
-            fetchUpdatedRooms();
-
-            // updated selected room for modal real time
-            if (data._id.toString() === selectedRoom._id.toString()) {
-                setSelectedRoom(data);
-            }
-        });
-
-        return () => {
-            socket.off('updated-group');
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket]);
