@@ -10,6 +10,8 @@ import { AuthProvider } from './hooks/useAuth';
 import { ChatProvider } from './hooks/useChat';
 import { VideoCallProvider } from './hooks/useVideoCall';
 
+import './i18n';
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     <React.StrictMode>
