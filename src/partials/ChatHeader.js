@@ -10,6 +10,7 @@ import notificationService from '~/services/notificationService';
 import socket from '~/configs/socket';
 import userService from '~/services/userService';
 import Modal from 'react-responsive-modal';
+import { useTranslation } from 'react-i18next';
 
 function ChatHeader() {
     const { isDarkMode, toggleDarkMode } = useTheme();
@@ -18,6 +19,12 @@ function ChatHeader() {
     const [openNotification, setOpenNotification] = useState(false);
     const [openFriendList, setOpenFriendList] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    const { t, i18n } = useTranslation();
+
+    const changeLanguage = (lng) => {
+        i18n.changeLanguage(lng);
+    };
 
     const openModal = () => {
         setIsDeleteModalOpen(true);
@@ -129,10 +136,23 @@ function ChatHeader() {
         >
             <div className="container mx-auto flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">
-                    <Link to="/">Website Name</Link>
+                    <Link to="/">{t('title')}</Link>
                 </h1>
                 <nav>
                     <ul className="flex items-center space-x-4">
+                        <button
+                            type="button"
+                            onClick={() => changeLanguage('vi')}
+                        >
+                            vi
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => changeLanguage('en')}
+                        >
+                            en
+                        </button>
+
                         <li className="cursor-pointer" onClick={toggleDarkMode}>
                             {isDarkMode ? (
                                 <HiSun className="inline-block" size={24} />
