@@ -180,7 +180,9 @@ function ChatHeader() {
                                 )}
                             </span>
                             {openNotification && (
-                                <div className="absolute right-0 top-12 w-80 rounded-lg bg-white p-4 shadow-lg">
+                                <div
+                                    className={`absolute right-0 top-12 w-80 rounded-lg ${isDarkMode ? 'bg-[#282a2d]' : 'bg-[#fafafa]'} p-4 shadow-lg`}
+                                >
                                     <h2 className="mb-4 text-xl font-semibold">
                                         Notifications
                                     </h2>
@@ -218,7 +220,9 @@ function ChatHeader() {
                                 )}
 
                                 {openFriendList && (
-                                    <div className="absolute right-0 top-12 w-80 rounded-lg bg-white p-4 shadow-lg">
+                                    <div
+                                        className={`absolute right-0 top-12 w-80 rounded-lg ${isDarkMode ? 'bg-[#282a2d]' : 'bg-[#fafafa]'} p-4 shadow-lg`}
+                                    >
                                         <h2 className="mb-4 text-xl font-semibold">
                                             Friend Requests
                                         </h2>

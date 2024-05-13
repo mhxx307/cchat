@@ -70,7 +70,7 @@ function MessageItem({ message, onReply, onDelete }) {
                         <div className="flex items-start justify-end space-x-2">
                             <div className="max-w-[100%] rounded-md bg-blue-500 p-2 text-white">
                                 {message.content && (
-                                    <div className="mb-2">
+                                    <div className="w-64 break-all">
                                         {message.content}
                                     </div>
                                 )}
@@ -143,7 +143,7 @@ function MessageItem({ message, onReply, onDelete }) {
                             )}
                             <div className="max-w-[100%] rounded-md bg-blue-500 p-2 text-white">
                                 {message.content && (
-                                    <div className="mb-2">
+                                    <div className="w-64 break-all">
                                         {message.content}
                                     </div>
                                 )}
