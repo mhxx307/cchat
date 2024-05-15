@@ -2,13 +2,23 @@ import { useAuth } from '~/hooks/useAuth';
 import FallbackAvatar from '../shared/FallbackAvatar';
 import Popover from '../shared/Popover';
 import { FaReply } from 'react-icons/fa';
+import { FaRightLong } from 'react-icons/fa6';
 import { MdDelete } from 'react-icons/md';
 import { useState } from 'react';
 import Modal from 'react-responsive-modal';
+import { useChat } from '~/hooks/useChat';
+import chatService from '~/services/chatService';
+import socket from '~/configs/socket';
 
 function MessageItem({ message, onReply, onDelete }) {
     const { userVerified } = useAuth();
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const { roomList, setSelectedRoom } = useChat();
+
+    const openModalShare = () => {
+        setIsShareModalOpen(true);
+    };
 
     const openModal = () => {
         setIsDeleteModalOpen(true);
@@ -32,6 +42,57 @@ function MessageItem({ message, onReply, onDelete }) {
                 behavior: 'smooth',
                 block: 'center',
                 inline: 'center',
+            });
+        }
+    };
+
+    const handleSendMessageToOtherRoom = async (message, room) => {
+        // Send the message to the selected room
+        console.log('Sending message to room:', room);
+
+        try {
+            if (room.type === '1v1') {
+                const receiverId = room.members.find(
+                    (member) => member._id !== userVerified._id,
+                );
+
+                const response = await chatService.sendMessage({
+                    senderId: userVerified._id,
+                    receiverId: receiverId,
+                    content: message.content,
+                    images: message.images,
+                    roomId: room._id,
+                    replyMessageId: message.replyTo?._id || null,
+                    fromId: message.sender._id,
+                });
+
+                console.log('Response:', response);
+
+                socket.emit('send-message', {
+                    savedMessage: response,
+                });
+            } else if (room.type === 'group') {
+                const response = await chatService.sendMessage({
+                    senderId: userVerified._id,
+                    content: message.content,
+                    images: message.images,
+                    roomId: room._id,
+                    replyMessageId: message.replyTo?._id || null,
+                    fromId: message.sender._id,
+                });
+
+                console.log('Response:', response);
+
+                socket.emit('send-message', {
+                    savedMessage: response,
+                });
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+        } finally {
+            setSelectedRoom(room);
+            socket.emit('sort-room', {
+                userId: userVerified._id,
             });
         }
     };
@@ -64,11 +125,17 @@ function MessageItem({ message, onReply, onDelete }) {
                                 onReply={handleReply}
                                 openModal={openModal}
                                 message={message}
+                                openModalShare={openModalShare}
                             />
                         }
                     >
                         <div className="flex items-start justify-end space-x-2">
                             <div className="max-w-[100%] rounded-md bg-blue-500 p-2 text-white">
+                                {message.from && (
+                                    <div className="text-xs">
+                                        from {message.from.username}
+                                    </div>
+                                )}
                                 {message.content && (
                                     <div className="w-64 break-all">
                                         {message.content}
@@ -125,6 +192,7 @@ function MessageItem({ message, onReply, onDelete }) {
                                 onReply={handleReply}
                                 openModal={openModal}
                                 message={message}
+                                openModalShare={openModalShare}
                             />
                         }
                     >
@@ -195,13 +263,53 @@ function MessageItem({ message, onReply, onDelete }) {
                     </div>
                 </div>
             </Modal>
+
+            {/* modal confirm delete */}
+            <Modal
+                open={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                center
+            >
+                <div className="p-4">
+                    <h2 className="w-80 truncate">
+                        Share Message to Room: {message.content}
+                    </h2>
+                    <ul className="mt-4 max-h-60 overflow-y-auto">
+                        {roomList.map((room) => (
+                            <li
+                                key={room._id}
+                                className="mb-2 cursor-pointer rounded-md border p-2 hover:bg-gray-100"
+                                onClick={() => {
+                                    // handle sharing the message to the selected room
+                                    handleSendMessageToOtherRoom(message, room);
+                                    setIsShareModalOpen(false);
+                                }}
+                            >
+                                {room.name ||
+                                    room.members.find(
+                                        (member) =>
+                                            member._id !== userVerified._id,
+                                    ).username}
+                            </li>
+                        ))}
+                    </ul>
+                    <div className="mt-4 flex justify-end space-x-2">
+                        <button
+                            onClick={() => setIsShareModalOpen(false)}
+                            className="rounded-md bg-gray-300 p-2"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }
 
 export default MessageItem;
 
-const Options = ({ onReply, openModal, message }) => {
+const Options = ({ onReply, openModal, message, openModalShare }) => {
     const { userVerified } = useAuth();
     return (
         <div className="flex space-x-2">
@@ -215,6 +323,12 @@ const Options = ({ onReply, openModal, message }) => {
             )}
             <button onClick={onReply} className="flex items-center space-x-1">
                 <FaReply />
+            </button>
+            <button
+                onClick={openModalShare}
+                className="flex items-center space-x-1"
+            >
+                <FaRightLong />
             </button>
         </div>
     );
