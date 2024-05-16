@@ -12,6 +12,9 @@ import { storage } from '~/configs/firebase';
 import { v4 } from 'uuid';
 import AddMembersModal from './AddMembersModal';
 import { useVideoCall } from '~/hooks/useVideoCall';
+import { useTheme } from '~/hooks/useTheme';
+import { FaPhoneAlt } from 'react-icons/fa';
+import { IoPersonAddSharp } from 'react-icons/io5';
 
 const ChatRoom = () => {
     const { selectedRoom, fetchUpdatedRooms } = useChat();
@@ -29,6 +32,7 @@ const ChatRoom = () => {
     const [selectedImages, setSelectedImages] = useState([]);
     const [openModalInvite, setOpenModalInvite] = useState(false);
     const { handleCallRequest } = useVideoCall();
+    const { isDarkMode } = useTheme();
 
     console.log('selectedImages', selectedImages);
 
@@ -226,12 +230,15 @@ const ChatRoom = () => {
     };
 
     return (
-        <div className="flex h-[80vh] flex-col justify-between rounded-md bg-gray-100 px-3 pb-2 md:h-full">
+        <div
+            className={`flex h-[80vh] flex-col justify-between ${isDarkMode ? 'bg-[#282a2d]' : 'bg-[#fafafa]'} pb-2 md:h-full`}
+        >
             <div className="flex justify-between">
                 <div className="flex space-x-4">
                     {selectedRoom.type === '1v1' && (
-                        <h2 className="">
-                            Chatting in with{' '}
+                        <h2
+                            className={`${isDarkMode ? 'text-white' : 'text-black'}`}
+                        >
                             {
                                 selectedRoom.members.find(
                                     (member) => member._id !== userVerified._id,
@@ -242,7 +249,10 @@ const ChatRoom = () => {
 
                     {selectedRoom.type === 'group' && (
                         <>
-                            <button onClick={handleOpenAddGroupModal}>
+                            <button
+                                className={`ml-4 focus:outline-none ${isDarkMode ? 'text-white' : 'text-black'}`}
+                                onClick={handleOpenAddGroupModal}
+                            >
                                 {selectedRoom.name}
                             </button>
                             <Modal open={open} onClose={onCloseModal} center>
@@ -252,6 +262,7 @@ const ChatRoom = () => {
                     )}
 
                     <button
+                        className={`focus:outline-none ${isDarkMode ? 'text-white' : 'text-black'}`}
                         onClick={() => {
                             console.log('Call video');
                             handleCallRequest(
@@ -261,14 +272,17 @@ const ChatRoom = () => {
                             );
                         }}
                     >
-                        Call video
+                        <FaPhoneAlt />
                     </button>
                 </div>
 
                 {selectedRoom?.admin?._id === userVerified._id && (
                     <>
-                        <button onClick={handleOpenInviteModal}>
-                            invite people
+                        <button
+                            className={`mr-4 ${isDarkMode ? 'text-white' : 'text-black'}`}
+                            onClick={handleOpenInviteModal}
+                        >
+                            <IoPersonAddSharp />
                         </button>
                         <Modal
                             open={openModalInvite}
@@ -283,7 +297,7 @@ const ChatRoom = () => {
                 )}
             </div>
 
-            <div className="mb-2 max-h-[60vh] flex-1 overflow-y-auto">
+            <div className="max-h-[70vh] flex-1 overflow-y-auto px-2">
                 {messages.length > 0 &&
                     messages.map((message) => (
                         <MessageItem
@@ -296,27 +310,6 @@ const ChatRoom = () => {
                 <div ref={messagesEndRef} />
             </div>
 
-            {isReplying && (
-                <div className="rounded-md bg-gray-300 p-2">
-                    <div className="flex items-center space-x-2">
-                        <span>Replying to:</span>
-                        <span className="text-sm">
-                            {
-                                messages.find(
-                                    (message) =>
-                                        message._id === replyingMessage,
-                                ).content
-                            }
-                        </span>
-                        <button
-                            onClick={() => setIsReplying(false)}
-                            className="text-red-500"
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            )}
             <div className="flex space-x-2">
                 {selectedImages.map((image, index) => (
                     <div key={index} className="relative">
@@ -349,9 +342,31 @@ const ChatRoom = () => {
                 ))}
             </div>
 
+            {isReplying && (
+                <div className="rounded-md bg-gray-300 p-2">
+                    <div className="flex items-center space-x-2">
+                        <span>Replying to:</span>
+                        <span className="text-sm">
+                            {
+                                messages.find(
+                                    (message) =>
+                                        message._id === replyingMessage,
+                                ).content
+                            }
+                        </span>
+                        <button
+                            onClick={() => setIsReplying(false)}
+                            className="text-red-500"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <div className="flex items-center">
                 {showEmojiPicker && (
-                    <div className="absolute right-[5%] top-[20%] mt-8">
+                    <div className="absolute right-[5%] top-[40%]">
                         <EmojiPicker
                             onEmojiClick={(props) => {
                                 setShowEmojiPicker(false);
@@ -360,12 +375,18 @@ const ChatRoom = () => {
                         />
                     </div>
                 )}
+
                 <input
                     type="text"
                     placeholder="Type your message..."
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     className="mr-2 flex-1 rounded-md border p-2 focus:border-blue-500 focus:outline-none"
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            handleSendMessage();
+                        }
+                    }}
                 />
                 <input
                     type="file"

@@ -44,6 +44,7 @@ const chatService = {
         images,
         roomId,
         replyMessageId,
+        fromId,
     }) => {
         const response = await httpRequest.post('/chat/sendMessage', {
             senderId,
@@ -52,6 +53,7 @@ const chatService = {
             images,
             roomId,
             replyTo: replyMessageId,
+            from: fromId,
         });
 
         return response;

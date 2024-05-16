@@ -12,6 +12,7 @@ import socket from '~/configs/socket';
 import chatService from '~/services/chatService';
 import userService from '~/services/userService';
 import RoomSidebarItem from './RoomSidebarItem';
+import { useTheme } from '~/hooks/useTheme';
 
 const Sidebar = () => {
     const { userVerified } = useAuth();
@@ -30,6 +31,7 @@ const Sidebar = () => {
     const onOpenModal = () => setOpen(true);
     const onCloseModal = () => setOpen(false);
     const searchTermUserDebounce = useDebounce(searchTermUser, 500);
+    const { isDarkMode } = useTheme();
 
     // console.log('Current chat list:', roomList);
 
@@ -158,7 +160,7 @@ const Sidebar = () => {
 
     return (
         <div
-            className={`fixed flex h-full w-3/4 flex-col bg-gray-800 p-4 text-white transition-all duration-300 md:w-[270px] lg:w-[270px] ${
+            className={`fixed flex h-full w-3/4 flex-col ${isDarkMode ? 'bg-[#212326] text-white' : 'bg-gray-100 text-black'} p-4  transition-all duration-300 md:w-[270px] lg:w-[270px] ${
                 isSidebarVisible ? 'translate-x-0' : '-translate-x-full'
             }`}
         >
@@ -173,7 +175,7 @@ const Sidebar = () => {
                 <div className="mb-4 flex items-center justify-between">
                     <input
                         type="text"
-                        className="focus:shadow-outline mr-2 w-full rounded bg-gray-700 px-4 py-2 text-white focus:outline-none"
+                        className={`focus:shadow-outline mr-2 w-full rounded px-4 py-2 focus:outline-none ${isDarkMode ? 'bg-[#2c2c30] text-white' : 'bg-[#ffffff] text-black'}`}
                         placeholder="Search"
                         value={searchTermUser}
                         onChange={handleSearchChange}

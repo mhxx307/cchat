@@ -41,7 +41,7 @@ function ChatPage() {
     const renderChatRoom = () => {
         return (
             <div
-                className={`flex-1 p-4 md:p-8 ${isSidebarVisible ? 'w-full md:pl-[270px] lg:pl-[270px]' : 'w-full'}`}
+                className={`flex-1 ${isSidebarVisible ? 'w-full md:pl-[270px] lg:pl-[270px]' : 'w-full'}`}
             >
                 {selectedRoom ? (
                     <ChatRoom />
