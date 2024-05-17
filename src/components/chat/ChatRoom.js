@@ -242,28 +242,58 @@ const ChatRoom = () => {
         setOpenModalInvite(false);
     };
 
+    console.log('Selected room:', selectedRoom);
+
     return (
         <div
             className={`flex h-[80vh] flex-col justify-between ${isDarkMode ? 'bg-[#282a2d]' : 'bg-[#fafafa]'} pb-2 md:h-full`}
         >
-            <div className="flex justify-between">
+            {/* header, info */}
+            <div className="flex justify-between border-b-[1px] py-1">
                 <div className="flex space-x-4">
                     {selectedRoom.type === '1v1' && (
-                        <h2
-                            className={`${isDarkMode ? 'text-white' : 'text-black'}`}
-                        >
-                            {
-                                selectedRoom.members.find(
-                                    (member) => member._id !== userVerified._id,
-                                ).username
-                            }
-                        </h2>
+                        <div className="flex items-center justify-center">
+                            <img
+                                src={
+                                    selectedRoom.members.find(
+                                        (member) =>
+                                            member._id !== userVerified._id,
+                                    ).profilePic ||
+                                    `https://ui-avatars.com/api/?name=${
+                                        selectedRoom.members.find(
+                                            (member) =>
+                                                member._id !== userVerified._id,
+                                        ).username
+                                    }`
+                                }
+                                alt="Avatar"
+                                className="mr-2 h-12 w-12 rounded-full object-cover"
+                            />
+                            <h2
+                                className={`${isDarkMode ? 'text-white' : 'text-black'}`}
+                            >
+                                {
+                                    selectedRoom.members.find(
+                                        (member) =>
+                                            member._id !== userVerified._id,
+                                    ).username
+                                }
+                            </h2>
+                        </div>
                     )}
 
                     {selectedRoom.type === 'group' && (
-                        <>
+                        <div className="flex items-center justify-center">
+                            <img
+                                src={
+                                    selectedRoom.image ||
+                                    `https://ui-avatars.com/api/?name=${selectedRoom.name}`
+                                }
+                                alt="Group avatar"
+                                className="mr-2 h-12 w-12 rounded-full object-cover"
+                            />
                             <button
-                                className={`ml-4 focus:outline-none ${isDarkMode ? 'text-white' : 'text-black'}`}
+                                className={`focus:outline-none ${isDarkMode ? 'text-white' : 'text-black'}`}
                                 onClick={handleOpenAddGroupModal}
                             >
                                 {selectedRoom.name}
@@ -271,9 +301,11 @@ const ChatRoom = () => {
                             <Modal open={open} onClose={onCloseModal} center>
                                 <GroupProfileModal />
                             </Modal>
-                        </>
+                        </div>
                     )}
+                </div>
 
+                <div className="flex space-x-4 pr-4">
                     <button
                         className={`focus:outline-none ${isDarkMode ? 'text-white' : 'text-black'}`}
                         onClick={() => {
@@ -287,29 +319,30 @@ const ChatRoom = () => {
                     >
                         <FaPhoneAlt />
                     </button>
-                </div>
 
-                {selectedRoom?.admin?._id === userVerified._id && (
-                    <>
-                        <button
-                            className={`mr-4 ${isDarkMode ? 'text-white' : 'text-black'}`}
-                            onClick={handleOpenInviteModal}
-                        >
-                            <IoPersonAddSharp />
-                        </button>
-                        <Modal
-                            open={openModalInvite}
-                            onClose={onCloseModalInvite}
-                            center
-                        >
-                            <AddMembersModal
-                                onCloseModal={onCloseModalInvite}
-                            />
-                        </Modal>
-                    </>
-                )}
+                    {selectedRoom?.admin?._id === userVerified._id && (
+                        <>
+                            <button
+                                className={`${isDarkMode ? 'text-white' : 'text-black'}`}
+                                onClick={handleOpenInviteModal}
+                            >
+                                <IoPersonAddSharp />
+                            </button>
+                            <Modal
+                                open={openModalInvite}
+                                onClose={onCloseModalInvite}
+                                center
+                            >
+                                <AddMembersModal
+                                    onCloseModal={onCloseModalInvite}
+                                />
+                            </Modal>
+                        </>
+                    )}
+                </div>
             </div>
 
+            {/* body, messages */}
             <div className="max-h-[70vh] flex-1 overflow-y-auto px-2">
                 {messages.length > 0 &&
                     messages.map((message) => (
