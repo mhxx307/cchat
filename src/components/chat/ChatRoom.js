@@ -249,7 +249,7 @@ const ChatRoom = () => {
             className={`flex h-[80vh] flex-col justify-between ${isDarkMode ? 'bg-[#282a2d]' : 'bg-[#fafafa]'} pb-2 md:h-full`}
         >
             {/* header, info */}
-            <div className="flex justify-between border-b-[1px] py-1">
+            <div className="flex justify-between border-b-[1px] p-1">
                 <div className="flex space-x-4">
                     {selectedRoom.type === '1v1' && (
                         <div className="flex items-center justify-center">
@@ -305,7 +305,7 @@ const ChatRoom = () => {
                     )}
                 </div>
 
-                <div className="flex space-x-4 pr-4">
+                <div className="flex space-x-4">
                     <button
                         className={`focus:outline-none ${isDarkMode ? 'text-white' : 'text-black'}`}
                         onClick={() => {
