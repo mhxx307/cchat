@@ -33,9 +33,9 @@ const ChatRoom = () => {
     const [openModalInvite, setOpenModalInvite] = useState(false);
     const { handleCallRequest } = useVideoCall();
     const { isDarkMode } = useTheme();
+    const [isFriend1V1, setIsFriend1V1] = useState(false);
 
-    console.log('selectedImages', selectedImages);
-
+    // console.log('selectedImages', selectedImages);
     // console.log('selected room:', selectedRoom);
     // console.log('messages:', messages);
 
@@ -49,8 +49,21 @@ const ChatRoom = () => {
                 setMessages(response);
             }
         };
+
         fetchMessages();
-    }, [selectedRoom]);
+
+        // check if the selected room is 1v1 chat
+        if (selectedRoom.type === '1v1') {
+            const friend = selectedRoom.members.find(
+                (member) => member._id !== userVerified._id,
+            );
+            console.log('Friend:', friend);
+            const isFriend = userVerified.friends.find(
+                (f) => f._id === friend._id,
+            );
+            setIsFriend1V1(isFriend);
+        }
+    }, [selectedRoom, userVerified]);
 
     // scroll to the bottom of the chat messages
     useEffect(() => {
@@ -364,6 +377,13 @@ const ChatRoom = () => {
                 </div>
             )}
 
+            {selectedRoom.type === '1v1' && !isFriend1V1 && (
+                <div className="text-center text-sm text-red-500">
+                    You are not friend with this user. You can only send
+                    messages to friends.
+                </div>
+            )}
+
             <div className="flex items-center">
                 {showEmojiPicker && (
                     <div className="absolute right-[5%] top-[40%]">
@@ -378,6 +398,7 @@ const ChatRoom = () => {
 
                 <input
                     type="text"
+                    disabled={selectedRoom.type === '1v1' && !isFriend1V1}
                     placeholder="Type your message..."
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
