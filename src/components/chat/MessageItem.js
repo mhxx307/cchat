@@ -97,7 +97,7 @@ function MessageItem({ message, onReply, onDelete }) {
         }
     };
 
-    console.log('Message:', message);
+    // console.log('Message:', message);
 
     return (
         <div

@@ -19,6 +19,7 @@ function ChatHeader() {
     const [openNotification, setOpenNotification] = useState(false);
     const [openFriendList, setOpenFriendList] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [friendId, setFriendId] = useState(null);
 
     const { t, i18n } = useTranslation();
 
@@ -114,8 +115,10 @@ function ChatHeader() {
         }
     };
 
-    const handleUnfriend = async (friendId) => {
+    const handleUnfriend = async () => {
         try {
+            if (!friendId) return;
+
             const response = await userService.unfriend({
                 userId: userVerified._id,
                 friendId: friendId,
@@ -127,6 +130,9 @@ function ChatHeader() {
             socket.emit('received-friend-request', response);
         } catch (error) {
             console.error('Error unfriending:', error);
+        } finally {
+            setIsDeleteModalOpen(false);
+            setFriendId(null);
         }
     };
 
@@ -275,9 +281,12 @@ function ChatHeader() {
                                                     >
                                                         <p>{friend.username}</p>
                                                         <button
-                                                            onClick={() =>
-                                                                openModal()
-                                                            }
+                                                            onClick={() => {
+                                                                openModal();
+                                                                setFriendId(
+                                                                    friend._id,
+                                                                );
+                                                            }}
                                                             className="rounded-md bg-red-500 px-2 py-1 text-white  duration-75 hover:bg-red-600"
                                                         >
                                                             Unfriend
@@ -308,7 +317,7 @@ function ChatHeader() {
                 center
             >
                 <div className="p-4">
-                    <h2>Are you sure you want to delete this message?</h2>
+                    <h2>Are you sure you want to remove this person?</h2>
                     <div className="flex justify-end space-x-2">
                         <button
                             onClick={() => setIsDeleteModalOpen(false)}
@@ -317,7 +326,7 @@ function ChatHeader() {
                             Cancel
                         </button>
                         <button
-                            onClick={handleUnfriend}
+                            onClick={() => handleUnfriend()}
                             className="rounded-md bg-red-500 p-2 text-white"
                         >
                             Delete
