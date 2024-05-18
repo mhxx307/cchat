@@ -1,6 +1,7 @@
 import 'react-responsive-modal/styles.css';
 import { useEffect, useState } from 'react';
 import { MdOutlineGroupAdd } from 'react-icons/md';
+import { IoMdPersonAdd } from 'react-icons/io';
 import Modal from 'react-responsive-modal';
 import { toast } from 'react-toastify';
 
@@ -171,7 +172,7 @@ const Sidebar = () => {
                 {isSidebarVisible ? '←' : '→'}
             </button>
 
-            <div className="mb-4">
+            <div className="relative mb-4">
                 <div className="mb-4 flex items-center justify-between">
                     <input
                         type="text"
@@ -192,28 +193,33 @@ const Sidebar = () => {
                         />
                     </Modal>
                 </div>
-                <ul className="">
-                    {searchResults.map((user) =>
-                        isFriend(user) ? (
-                            <li
-                                key={user._id}
-                                onClick={() => handleUserSelect(user)}
-                                className="flex cursor-pointer items-center justify-between px-4 py-2 hover:bg-gray-700"
-                            >
-                                <p> {user.username}</p>
-                            </li>
-                        ) : (
-                            <li
-                                key={user._id}
-                                onClick={() => handleAddFriend(user)}
-                                className="flex cursor-pointer items-center justify-between px-4 py-2 hover:bg-gray-700"
-                            >
-                                <p>{user.username}</p>
-                                <p>+ add friend</p>
-                            </li>
-                        ),
-                    )}
-                </ul>
+                {/* search list */}
+                {searchResults.length > 0 && (
+                    <ul
+                        className={`absolute z-10 mt-2 max-h-60 w-full overflow-y-auto rounded-lg ${isDarkMode ? 'bg-[#2c2c30] text-white' : 'bg-[#ffffff] text-black'} shadow-lg`}
+                    >
+                        {searchResults.map((user) =>
+                            isFriend(user) ? (
+                                <li
+                                    key={user._id}
+                                    onClick={() => handleUserSelect(user)}
+                                    className="flex cursor-pointer items-center justify-between px-4 py-2 hover:bg-gray-700"
+                                >
+                                    <p>{user.username}</p>
+                                </li>
+                            ) : (
+                                <li
+                                    key={user._id}
+                                    onClick={() => handleAddFriend(user)}
+                                    className="flex cursor-pointer items-center justify-between px-4 py-2 hover:bg-gray-700"
+                                >
+                                    <p>{user.username}</p>
+                                    <IoMdPersonAdd />
+                                </li>
+                            ),
+                        )}
+                    </ul>
+                )}
             </div>
 
             <h2 className="mb-4 text-2xl font-semibold">Chat Rooms</h2>

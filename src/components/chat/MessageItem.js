@@ -10,6 +10,9 @@ import { useChat } from '~/hooks/useChat';
 import chatService from '~/services/chatService';
 import socket from '~/configs/socket';
 
+import Tippy from '@tippyjs/react';
+import 'tippy.js/dist/tippy.css';
+
 function MessageItem({ message, onReply, onDelete }) {
     const { userVerified } = useAuth();
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -117,7 +120,7 @@ function MessageItem({ message, onReply, onDelete }) {
                             handleReferenceMessage={handleReferenceMessage}
                         />
                     )}
-    
+
                     <Popover
                         placement="left"
                         renderPopover={
@@ -150,7 +153,7 @@ function MessageItem({ message, onReply, onDelete }) {
                                                     <img
                                                         key={index}
                                                         src={imageUrl}
-                                                        alt={`Image ${index}`}
+                                                        alt={`${index}`}
                                                         className="message-image mb-2 mr-2 max-h-[200px] max-w-[200px] rounded-lg shadow-md"
                                                     />
                                                 ),
@@ -171,11 +174,11 @@ function MessageItem({ message, onReply, onDelete }) {
                             )}
                         </div>
                     </Popover>
-    
+
                     <div className="mt-1 text-xs text-gray-300">
                         {new Date(message.timestamp).toLocaleString()}
                     </div>
-    
+
                     {/* Images display */}
                 </div>
             ) : (
@@ -187,7 +190,7 @@ function MessageItem({ message, onReply, onDelete }) {
                             handleReferenceMessage={handleReferenceMessage}
                         />
                     )}
-    
+
                     <Popover
                         placement="right"
                         renderPopover={
@@ -226,7 +229,7 @@ function MessageItem({ message, onReply, onDelete }) {
                                                     <img
                                                         key={index}
                                                         src={imageUrl}
-                                                        alt={`Image ${index}`}
+                                                        alt={`${index}`}
                                                         className="message-image mb-2 mr-2 max-h-[200px] max-w-[200px] rounded-lg shadow-md"
                                                     />
                                                 ),
@@ -236,15 +239,15 @@ function MessageItem({ message, onReply, onDelete }) {
                             </div>
                         </div>
                     </Popover>
-    
+
                     <div className="mt-1 text-xs text-gray-500">
                         {new Date(message.timestamp).toLocaleString()}
                     </div>
-    
+
                     {/* Images display */}
                 </div>
             )}
-    
+
             {/* modal confirm delete */}
             <Modal
                 open={isDeleteModalOpen}
@@ -320,26 +323,34 @@ const Options = ({ onReply, openModal, message, openModalShare }) => {
     return (
         <div className="flex space-x-2">
             {message.sender._id === userVerified._id && (
-                <button
-                    onClick={() => openModal()}
-                    className="flex items-center space-x-1 text-red-500"
-                >
-                    <MdDelete />
-                </button>
+                <Tippy content="Delete">
+                    <button
+                        onClick={() => openModal()}
+                        className="flex items-center space-x-1 text-red-500"
+                    >
+                        <MdDelete />
+                    </button>
+                </Tippy>
             )}
-            <button onClick={onReply} className="flex items-center space-x-1">
-                <FaReply />
-            </button>
-            <button
-                onClick={openModalShare}
-                className="flex items-center space-x-1"
-            >
-                <FaRightLong />
-            </button>
+            <Tippy content="Reply">
+                <button
+                    onClick={onReply}
+                    className="flex items-center space-x-1"
+                >
+                    <FaReply />
+                </button>
+            </Tippy>
+            <Tippy content="Share">
+                <button
+                    onClick={openModalShare}
+                    className="flex items-center space-x-1"
+                >
+                    <FaRightLong />
+                </button>
+            </Tippy>
         </div>
     );
 };
-
 const ReplyMessageItem = ({ message, handleReferenceMessage }) => {
     return (
         <div

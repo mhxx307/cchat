@@ -7,6 +7,7 @@ import Modal from 'react-responsive-modal';
 import { useEffect } from 'react';
 import socket from '~/configs/socket';
 import chatService from '~/services/chatService';
+import { FaSpinner, FaPhoneSlash } from 'react-icons/fa';
 
 function ChatPage() {
     const { selectedRoom, isSidebarVisible } = useChat();
@@ -17,8 +18,12 @@ function ChatPage() {
         onCloseModal,
         showIsCalling,
         onCloseModalIsCalling,
+        recipient,
     } = useVideoCall();
     const { setSelectedRoom, fetchUpdatedRooms } = useChat();
+
+    console.log('recipient:', recipient);
+    console.log('showIsCalling:', showIsCalling);
 
     useEffect(() => {
         socket.on('updated-group', async (data) => {
@@ -64,8 +69,17 @@ function ChatPage() {
                 />
             </Modal>
             <Modal open={showIsCalling} onClose={onCloseModalIsCalling} center>
-                <div className="h-[500px] w-[500px] bg-green-500 text-white">
-                    Calling...
+                <div className="flex h-[500px] w-[500px] flex-col items-center justify-center rounded-lg bg-green-500 p-4 text-white shadow-lg">
+                    <p className="mb-4 text-2xl font-bold">
+                        Calling {recipient?.username}...
+                    </p>
+                    <FaSpinner className="mb-4 animate-spin text-4xl" />
+                    {/* <button
+                        onClick={handleRejectCall}
+                        className="flex items-center rounded-full bg-red-500 px-4 py-2 font-bold text-white transition duration-300 hover:bg-red-600"
+                    >
+                        <FaPhoneSlash className="mr-2" /> Cancel Call
+                    </button> */}
                 </div>
             </Modal>
             <Sidebar />
