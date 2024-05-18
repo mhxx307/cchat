@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import Loading from '../shared/Loading';
 import { useChat } from '~/hooks/useChat';
 import socket from '~/configs/socket';
+import { GrUserAdmin } from 'react-icons/gr';
 
 function GroupProfileModal() {
     const { userVerified } = useAuth();
@@ -202,7 +203,7 @@ function GroupProfileModal() {
                             </div>
 
                             {selectedRoom.admin._id === member._id && (
-                                <p>Key</p>
+                                <GrUserAdmin className="text-blue-500" />
                             )}
 
                             {userVerified._id === selectedRoom.admin._id &&
