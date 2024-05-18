@@ -14,14 +14,19 @@ export const VideoCallProvider = ({ children }) => {
     const [showIncomingCall, setShowIncomingCall] = useState(false);
     const [showIsCalling, setShowIsCalling] = useState(false);
     const [caller, setCaller] = useState(null);
+    const [recipient, setRecipient] = useState(null);
     const navigate = useNavigate();
 
     const handleCallRequest = (recipient) => {
+        setShowIsCalling(true);
+
         // Emit call request event to the server
         socket.emit('call-request', {
             caller: userVerified,
             recipient: recipient,
         });
+
+        setRecipient(recipient);
     };
 
     useEffect(() => {
@@ -29,6 +34,11 @@ export const VideoCallProvider = ({ children }) => {
             // Show incoming call UI when call is received
             setCaller(caller);
             setShowIncomingCall(true);
+        });
+
+        socket.on('call-rejected', () => {
+            // Show incoming call UI when call is rejected
+            setShowIsCalling(false);
         });
 
         return () => {
@@ -61,6 +71,7 @@ export const VideoCallProvider = ({ children }) => {
     const handleRejectCall = () => {
         // Emit reject call event to the server
         setShowIncomingCall(false);
+        socket.emit('reject-call', { caller, recipient: userVerified });
     };
 
     const onCloseModal = () => {
@@ -83,6 +94,7 @@ export const VideoCallProvider = ({ children }) => {
                 showIsCalling,
                 setShowIsCalling,
                 onCloseModalIsCalling,
+                recipient,
             }}
         >
             {children}

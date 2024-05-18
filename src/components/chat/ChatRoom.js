@@ -106,18 +106,14 @@ const ChatRoom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    // Upload each image to Firebase Storage
     const uploadToFirebase = async () => {
         const imageUrls = [];
-        // Upload each image to Firebase Storage
         for (const selectedImage of selectedImages) {
             const imageFile = selectedImage.file;
-            // Tạo một reference đến vị trí lưu trữ trên Firebase Storage, có thể dùng tên file hoặc unique ID (ví dụ: UUID)
             const imageRef = ref(storage, `images/${imageFile?.name + v4()}`);
-            // Thực hiện tải lên ảnh vào Firebase Storage
             const snapshot = await uploadBytes(imageRef, imageFile);
-            // Lấy đường dẫn tải xuống (URL) của ảnh đã tải lên
             const imageUrl = await getDownloadURL(snapshot.ref);
-            // Thêm URL của ảnh vào mảng imageUrls
             imageUrls.push(imageUrl);
         }
 
