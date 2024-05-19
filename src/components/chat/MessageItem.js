@@ -4,20 +4,24 @@ import Popover from '../shared/Popover';
 import { FaReply } from 'react-icons/fa';
 import { FaRightLong } from 'react-icons/fa6';
 import { MdDelete } from 'react-icons/md';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Modal from 'react-responsive-modal';
 import { useChat } from '~/hooks/useChat';
 import chatService from '~/services/chatService';
 import socket from '~/configs/socket';
+import { ref, getDownloadURL } from 'firebase/storage';
+import { storage } from '~/configs/firebase';
 
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
+
 
 function MessageItem({ message, onReply, onDelete }) {
     const { userVerified } = useAuth();
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const { roomList, setSelectedRoom } = useChat();
+    const [downloadUrlList, setDownloadUrlList] = useState([]);
 
     const openModalShare = () => {
         setIsShareModalOpen(true);
@@ -33,6 +37,37 @@ function MessageItem({ message, onReply, onDelete }) {
 
     const handleDelete = () => {
         onDelete(message);
+    };
+
+    useEffect(() => {
+        async function fetchDownloadUrlList() {
+            const mediaRefs = message.files.map((file) => ref(storage, `files/${file.name}`));
+            const mediaInfo = await Promise.all(mediaRefs.map(async (mediaRef) => {
+                const url = await getDownloadURL(mediaRef);
+                return {
+                    url,
+                    name: mediaRef.name,
+                }
+            }));
+
+            setDownloadUrlList(mediaInfo);
+        };
+
+        fetchDownloadUrlList();
+    }, []);
+
+    const handleDownloadFile = (file) => {
+        console.log(file);
+        const fileUrl = downloadUrlList.find((media) => media.name === file.name).url;
+        console.log(fileUrl);
+    
+        // Create a temporary anchor element
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = file.name; // Set the download attribute to the file's name
+        document.body.appendChild(link); // Append the link to the document body
+        link.click(); // Programmatically click the link to trigger the download
+        document.body.removeChild(link); // Remove the link from the document
     };
 
     const handleReferenceMessage = (message) => {
@@ -54,42 +89,21 @@ function MessageItem({ message, onReply, onDelete }) {
         console.log('Sending message to room:', room);
 
         try {
-            if (room.type === '1v1') {
-                const receiverId = room.members.find(
-                    (member) => member._id !== userVerified._id,
-                );
+            const response = await chatService.sendMessage({
+                senderId: userVerified._id,
+                content: message.content,
+                images: message.images,
+                files: message.files,
+                roomId: room._id,
+                replyMessageId: message.replyTo?._id || null,
+                fromId: message.sender._id,
+            });
 
-                const response = await chatService.sendMessage({
-                    senderId: userVerified._id,
-                    receiverId: receiverId,
-                    content: message.content,
-                    images: message.images,
-                    roomId: room._id,
-                    replyMessageId: message.replyTo?._id || null,
-                    fromId: message.sender._id,
-                });
+            console.log('Response:', response);
 
-                console.log('Response:', response);
-
-                socket.emit('send-message', {
-                    savedMessage: response,
-                });
-            } else if (room.type === 'group') {
-                const response = await chatService.sendMessage({
-                    senderId: userVerified._id,
-                    content: message.content,
-                    images: message.images,
-                    roomId: room._id,
-                    replyMessageId: message.replyTo?._id || null,
-                    fromId: message.sender._id,
-                });
-
-                console.log('Response:', response);
-
-                socket.emit('send-message', {
-                    savedMessage: response,
-                });
-            }
+            socket.emit('send-message', {
+                savedMessage: response,
+            });
         } catch (error) {
             console.error('Error sending message:', error);
         } finally {
@@ -100,8 +114,6 @@ function MessageItem({ message, onReply, onDelete }) {
         }
     };
 
-    // console.log('Message:', message);
-
     return (
         <div
             id={message._id}
@@ -111,142 +123,110 @@ function MessageItem({ message, onReply, onDelete }) {
                     : 'mb-4 flex flex-col items-start'
             }
         >
-            {message.sender._id === userVerified._id ? (
-                <div className="mb-4 flex flex-col items-end">
-                    {/* reply message */}
-                    {message.replyTo && (
-                        <ReplyMessageItem
-                            message={message}
-                            handleReferenceMessage={handleReferenceMessage}
-                        />
-                    )}
+            {/* Message content */}
+            <div
+                className={
+                    message.sender._id === userVerified._id
+                        ? 'mb-4 flex flex-col items-end'
+                        : 'mb-4 flex flex-col items-start'
+                }
+            >
+                {/* Reply message */}
+                {message.replyTo && (
+                    <ReplyMessageItem
+                        message={message}
+                        handleReferenceMessage={handleReferenceMessage}
+                    />
+                )}
 
-                    <Popover
-                        placement="left"
-                        renderPopover={
-                            <Options
-                                onReply={handleReply}
-                                openModal={openModal}
-                                message={message}
-                                openModalShare={openModalShare}
-                            />
+                {/* Popover */}
+                <Popover
+                    placement={
+                        message.sender._id === userVerified._id
+                            ? 'left'
+                            : 'right'
+                    }
+                    renderPopover={
+                        <Options
+                            onReply={handleReply}
+                            openModal={openModal}
+                            message={message}
+                            openModalShare={openModalShare}
+                        />
+                    }
+                >
+                    <div
+                        className={
+                            message.sender._id === userVerified._id
+                                ? 'flex items-start justify-end space-x-2'
+                                : 'flex items-start space-x-2'
                         }
                     >
-                        <div className="flex items-start justify-end space-x-2">
-                            {/* Container chứa cả hình ảnh hồ sơ và nội dung tin nhắn, căn phải */}
-                            <div className="max-w-[100%] rounded-md bg-blue-500 p-2 text-white">
-                                {message.from && (
-                                    <div className="text-xs">
-                                        from {message.from.username}
-                                    </div>
-                                )}
-                                {message.content && (
-                                    <div className="w-64 break-all">
-                                        {message.content}
-                                    </div>
-                                )}
-                                {message.images &&
-                                    message.images.length > 0 && (
-                                        <div className="flex flex-wrap justify-start">
-                                            {message.images.map(
-                                                (imageUrl, index) => (
-                                                    <img
-                                                        key={index}
-                                                        src={imageUrl}
-                                                        alt={`${index}`}
-                                                        className="message-image mb-2 mr-2 max-h-[200px] max-w-[200px] rounded-lg shadow-md"
-                                                    />
-                                                ),
-                                            )}
+                        {/* Message content container */}
+                        <div className="max-w-[100%] rounded-md bg-blue-500 p-2 text-white">
+                            {message.from && (
+                                <div className="text-xs">
+                                    from {message.from.username}
+                                </div>
+                            )}
+                            {message.content && (
+                                <div className="w-64 break-all">
+                                    {message.content}
+                                </div>
+                            )}
+                            {/* Render images */}
+                            {message.images && message.images.length > 0 && (
+                                <div className="flex flex-wrap justify-start">
+                                    {message.images.map((imageUrl, index) => (
+                                        <img
+                                            key={index}
+                                            src={imageUrl}
+                                            alt={`${index}`}
+                                            className="message-image mb-2 mr-2 max-h-[200px] max-w-[200px] rounded-lg shadow-md"
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                            {/* Render files */}
+                            {message.files && message.files.length > 0 && (
+                                <div className="flex flex-wrap justify-start">
+                                    {message.files.map((file, index) => (
+                                        <div
+                                            key={index}
+                                            className="message-file-container mb-2 mr-2 flex items-center rounded-lg bg-gray-200 p-2 text-black shadow-md"
+                                        >
+                                            <p>{file.name}</p>
+                                            <button
+                                                onClick={() =>
+                                                    handleDownloadFile(file)
+                                                }
+                                                className="ml-auto rounded bg-blue-500 px-2 py-1 text-white"
+                                            >
+                                                Download
+                                            </button>
                                         </div>
-                                    )}
-                            </div>
-                            {message.sender.profilePic ? (
-                                <img
-                                    src={message.sender.profilePic}
-                                    alt="profile"
-                                    className="h-6 w-6 rounded-full"
-                                />
-                            ) : (
-                                <FallbackAvatar
-                                    name={message.sender.username}
-                                />
+                                    ))}
+                                </div>
                             )}
                         </div>
-                    </Popover>
-
-                    <div className="mt-1 text-xs text-gray-300">
-                        {new Date(message.timestamp).toLocaleString()}
-                    </div>
-
-                    {/* Images display */}
-                </div>
-            ) : (
-                <div className="mb-4 flex flex-col items-start">
-                    {/* reply message */}
-                    {message.replyTo && (
-                        <ReplyMessageItem
-                            message={message}
-                            handleReferenceMessage={handleReferenceMessage}
-                        />
-                    )}
-
-                    <Popover
-                        placement="right"
-                        renderPopover={
-                            <Options
-                                onReply={handleReply}
-                                openModal={openModal}
-                                message={message}
-                                openModalShare={openModalShare}
+                        {/* Sender avatar */}
+                        {message.sender.profilePic ? (
+                            <img
+                                src={message.sender.profilePic}
+                                alt="profile"
+                                className="h-6 w-6 rounded-full"
                             />
-                        }
-                    >
-                        <div className="flex items-start space-x-2">
-                            {/* Container chứa cả hình ảnh hồ sơ và nội dung tin nhắn */}
-                            {message.sender.profilePic ? (
-                                <img
-                                    src={message.sender.profilePic}
-                                    alt="profile"
-                                    className="h-6 w-6 rounded-full"
-                                />
-                            ) : (
-                                <FallbackAvatar
-                                    name={message.sender.username}
-                                />
-                            )}
-                            <div className="max-w-[100%] rounded-md bg-blue-500 p-2 text-white">
-                                {message.content && (
-                                    <div className="w-64 break-all">
-                                        {message.content}
-                                    </div>
-                                )}
-                                {message.images &&
-                                    message.images.length > 0 && (
-                                        <div className="flex flex-wrap justify-start">
-                                            {message.images.map(
-                                                (imageUrl, index) => (
-                                                    <img
-                                                        key={index}
-                                                        src={imageUrl}
-                                                        alt={`${index}`}
-                                                        className="message-image mb-2 mr-2 max-h-[200px] max-w-[200px] rounded-lg shadow-md"
-                                                    />
-                                                ),
-                                            )}
-                                        </div>
-                                    )}
-                            </div>
-                        </div>
-                    </Popover>
-
-                    <div className="mt-1 text-xs text-gray-500">
-                        {new Date(message.timestamp).toLocaleString()}
+                        ) : (
+                            <FallbackAvatar name={message.sender.username} />
+                        )}
                     </div>
+                </Popover>
 
-                    {/* Images display */}
+                {/* Timestamp */}
+                <div className="mt-1 text-xs text-gray-300">
+                    {new Date(message.timestamp).toLocaleString()}
                 </div>
-            )}
+            </div>
 
             {/* modal confirm delete */}
             <Modal
@@ -259,7 +239,8 @@ function MessageItem({ message, onReply, onDelete }) {
                     <div className="flex justify-end space-x-2">
                         <button
                             onClick={() => setIsDeleteModalOpen(false)}
-                            className="rounded-md bg-gray-300 p-2"
+                            className="
+                            rounded-md bg-gray-300 p-2"
                         >
                             Cancel
                         </button>
