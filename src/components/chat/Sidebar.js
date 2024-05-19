@@ -14,6 +14,7 @@ import chatService from '~/services/chatService';
 import userService from '~/services/userService';
 import RoomSidebarItem from './RoomSidebarItem';
 import { useTheme } from '~/hooks/useTheme';
+import { useTranslation } from 'react-i18next';
 
 const Sidebar = () => {
     const { userVerified } = useAuth();
@@ -34,6 +35,7 @@ const Sidebar = () => {
     const searchTermUserDebounce = useDebounce(searchTermUser, 500);
     const { isDarkMode } = useTheme();
 
+    const {t} = useTranslation();
     // console.log('Current chat list:', roomList);
 
     // Fetch users when searchTermUser changes
@@ -177,7 +179,7 @@ const Sidebar = () => {
                     <input
                         type="text"
                         className={`focus:shadow-outline mr-2 w-full rounded px-4 py-2 focus:outline-none ${isDarkMode ? 'bg-[#2c2c30] text-white' : 'bg-[#ffffff] text-black'}`}
-                        placeholder="Search"
+                        placeholder={`${t('search')}...`}
                         value={searchTermUser}
                         onChange={handleSearchChange}
                     />

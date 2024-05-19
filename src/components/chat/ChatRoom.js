@@ -34,10 +34,7 @@ const ChatRoom = () => {
     const { handleCallRequest } = useVideoCall();
     const { isDarkMode } = useTheme();
     const [isFriend1V1, setIsFriend1V1] = useState(false);
-
-    // console.log('selectedImages', selectedImages);
-    // console.log('selected room:', selectedRoom);
-    // console.log('messages:', messages);
+    const [selectedFiles, setSelectedFiles] = useState([]);
 
     // fetch messages when selected room changes
     useEffect(() => {
@@ -106,9 +103,11 @@ const ChatRoom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    // Upload each image to Firebase Storage
+    // Upload each image and file to Firebase Storage
     const uploadToFirebase = async () => {
         const imageUrls = [];
+        const fileUrls = [];
+
         for (const selectedImage of selectedImages) {
             const imageFile = selectedImage.file;
             const imageRef = ref(storage, `images/${imageFile?.name + v4()}`);
@@ -117,62 +116,60 @@ const ChatRoom = () => {
             imageUrls.push(imageUrl);
         }
 
-        console.log('Uploaded image URLs:', imageUrls);
+        for (const selectedFile of selectedFiles) {
+            const file = selectedFile.file;
+            const nameFile = file?.name;
+            const fileRef = ref(storage, `files/${nameFile}`);
+            const snapshot = await uploadBytes(fileRef, file);
+            const fileUrl = await getDownloadURL(snapshot.ref);
+            fileUrls.push({ url: fileUrl, name: nameFile });
+        }
 
-        return imageUrls;
+        console.log('Uploaded image URLs:', imageUrls);
+        console.log('Uploaded file URLs:', fileUrls);
+
+        return { imageUrls, fileUrls };
     };
 
     const handleSendMessage = async () => {
         setLoading(true);
 
         try {
-            if (newMessage.trim() === '' && selectedImages.length === 0) {
+            if (newMessage.trim() === '' && selectedImages.length === 0 && selectedFiles.length === 0) {
                 return;
             }
 
-            const imageUrls = await uploadToFirebase();
+            const { imageUrls, fileUrls } = await uploadToFirebase();
+
+            console.log('File URLs:', fileUrls);
+            const messageData = {
+                senderId: userVerified._id,
+                content: newMessage,
+                images: imageUrls,
+                files: fileUrls, 
+                roomId: selectedRoom._id,
+                replyMessageId: replyingMessage || null,
+            };
 
             if (selectedRoom.type === '1v1') {
                 const receiverId = selectedRoom.members.find(
                     (member) => member._id !== userVerified._id,
                 );
-
-                const response = await chatService.sendMessage({
-                    senderId: userVerified._id,
-                    receiverId: receiverId,
-                    content: newMessage,
-                    images: imageUrls.length > 0 ? imageUrls : [], // Thêm mảng imageUrls vào thông tin tin nhắn
-                    roomId: selectedRoom._id,
-                    replyMessageId: replyingMessage || null,
-                });
-
-                setMessages([...messages, response]);
-                setNewMessage('');
-                setSelectedImages([]);
-
-                socket.emit('send-message', {
-                    savedMessage: response,
-                });
-            } else if (selectedRoom.type === 'group') {
-                const response = await chatService.sendMessage({
-                    senderId: userVerified._id,
-                    content: newMessage,
-                    images: imageUrls, // Thêm mảng imageUrls vào thông tin tin nhắn
-                    roomId: selectedRoom._id,
-                    replyMessageId: replyingMessage || null,
-                });
-
-                setMessages([...messages, response]);
-                setNewMessage('');
-
-                socket.emit('send-message', {
-                    savedMessage: response,
-                });
+                messageData.receiverId = receiverId;
             }
+
+            const response = await chatService.sendMessage(messageData);
+            setMessages([...messages, response]);
+            setNewMessage('');
+            setSelectedImages([]);
+            setSelectedFiles([]);
+
+            socket.emit('send-message', {
+                savedMessage: response,
+            });
         } catch (error) {
             console.error('Error sending message:', error);
         } finally {
-            setSelectedImages([]);
             setLoading(false);
             fetchUpdatedRooms();
             setReplyingMessage(null);
@@ -187,24 +184,27 @@ const ChatRoom = () => {
         setShowEmojiPicker(!showEmojiPicker);
     };
 
-    const handleFileChange = (e) => {
+    const handleImageChange = (e) => {
         const files = Array.from(e.target.files);
-
         const selectedImagesArray = files.map((file) => ({
             file,
             preview: URL.createObjectURL(file),
         }));
+        setSelectedImages((prevImages) => [...prevImages, ...selectedImagesArray]);
+    };
 
-        setSelectedImages((prevImages) => [
-            ...prevImages,
-            ...selectedImagesArray,
-        ]);
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        const selectedFilesArray = files.map((file) => ({
+            file,
+            preview: URL.createObjectURL(file),
+        }));
+        setSelectedFiles((prevFiles) => [...prevFiles, ...selectedFilesArray]);
     };
 
     const handleReply = (message) => {
         setIsReplying(true);
         setReplyingMessage(message._id);
-        // console.log('Reply message:', message);
     };
 
     const handleRemoveImage = (index) => {
@@ -213,15 +213,19 @@ const ChatRoom = () => {
         setSelectedImages(newSelectedImages);
     };
 
+    const handleRemoveFile = (index) => {
+        const newSelectedFiles = [...selectedFiles];
+        newSelectedFiles.splice(index, 1);
+        setSelectedFiles(newSelectedFiles);
+    };
+
     const handleDelete = async (message) => {
-        // console.log('Delete message:', message);
         try {
             await chatService.deleteMessage(message._id);
             const updatedMessages = messages.filter(
                 (msg) => msg._id !== message._id,
             );
             setMessages(updatedMessages);
-
             socket.emit('delete-message', {
                 messageId: message._id,
             });
@@ -384,6 +388,36 @@ const ChatRoom = () => {
                 ))}
             </div>
 
+            <div className="flex space-x-2">
+                {selectedFiles.map((file, index) => (
+                    <div key={index} className="relative">
+                        <div className="flex items-center space-x-2">
+                            <span>{file.file.name}</span>
+                            <button
+                                className="flex items-center justify-center rounded-full bg-red-500 p-1 text-xs text-white"
+                                style={{ backgroundColor: '#ed3b3b' }} // Thay đổi màu nền
+                                onClick={() => handleRemoveFile(index)}
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    className="h-4 w-4"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M6 18L18 6M6 6l12 12"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
             {isReplying && (
                 <div className="rounded-md bg-gray-300 p-2">
                     <div className="flex items-center space-x-2">
@@ -440,16 +474,30 @@ const ChatRoom = () => {
                 />
                 <input
                     type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
                     className="hidden"
-                    id="upload-image"
+                    id="imageUpload"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    multiple
                 />
                 <label
-                    htmlFor="upload-image"
-                    className="mr-2 cursor-pointer text-2xl focus:outline-none"
+                    htmlFor="imageUpload"
+                    className="rounded-md border bg-gray-200 p-2 cursor-pointer"
                 >
-                    📎
+                    📷
+                </label>
+
+                <input
+                    type="file"
+                    className="hidden"
+                    id="fileUpload"
+                    onChange={handleFileChange}
+                />
+                <label
+                    htmlFor="fileUpload"
+                    className="rounded-md border bg-gray-200 p-2 cursor-pointer"
+                >
+                    📄
                 </label>
                 <button
                     onClick={toggleEmojiPicker}
