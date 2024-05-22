@@ -14,7 +14,7 @@ import { storage } from '~/configs/firebase';
 
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
-
+import { useTheme } from '~/hooks/useTheme';
 
 function MessageItem({ message, onReply, onDelete }) {
     const { userVerified } = useAuth();
@@ -22,6 +22,7 @@ function MessageItem({ message, onReply, onDelete }) {
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const { roomList, setSelectedRoom } = useChat();
     const [downloadUrlList, setDownloadUrlList] = useState([]);
+    const { isDarkMode } = useTheme();
 
     const openModalShare = () => {
         setIsShareModalOpen(true);
@@ -41,26 +42,32 @@ function MessageItem({ message, onReply, onDelete }) {
 
     useEffect(() => {
         async function fetchDownloadUrlList() {
-            const mediaRefs = message.files.map((file) => ref(storage, `files/${file.name}`));
-            const mediaInfo = await Promise.all(mediaRefs.map(async (mediaRef) => {
-                const url = await getDownloadURL(mediaRef);
-                return {
-                    url,
-                    name: mediaRef.name,
-                }
-            }));
+            const mediaRefs = message.files.map((file) =>
+                ref(storage, `files/${file.name}`),
+            );
+            const mediaInfo = await Promise.all(
+                mediaRefs.map(async (mediaRef) => {
+                    const url = await getDownloadURL(mediaRef);
+                    return {
+                        url,
+                        name: mediaRef.name,
+                    };
+                }),
+            );
 
             setDownloadUrlList(mediaInfo);
-        };
+        }
 
         fetchDownloadUrlList();
-    }, []);
+    }, [message.files]);
 
     const handleDownloadFile = (file) => {
         console.log(file);
-        const fileUrl = downloadUrlList.find((media) => media.name === file.name).url;
+        const fileUrl = downloadUrlList.find(
+            (media) => media.name === file.name,
+        ).url;
         console.log(fileUrl);
-    
+
         // Create a temporary anchor element
         const link = document.createElement('a');
         link.href = fileUrl;
@@ -162,6 +169,22 @@ function MessageItem({ message, onReply, onDelete }) {
                                 : 'flex items-start space-x-2'
                         }
                     >
+                        {userVerified._id !== message.sender._id && (
+                            <div className="flex items-center space-x-2">
+                                {message.sender.profilePic ? (
+                                    <img
+                                        src={message.sender.profilePic}
+                                        alt="profile"
+                                        className="h-6 w-6 rounded-full"
+                                    />
+                                ) : (
+                                    <FallbackAvatar
+                                        name={message.sender.username}
+                                    />
+                                )}
+                            </div>
+                        )}
+
                         {/* Message content container */}
                         <div className="max-w-[100%] rounded-md bg-blue-500 p-2 text-white">
                             {message.from && (
@@ -209,21 +232,27 @@ function MessageItem({ message, onReply, onDelete }) {
                                 </div>
                             )}
                         </div>
+
                         {/* Sender avatar */}
-                        {message.sender.profilePic ? (
-                            <img
-                                src={message.sender.profilePic}
-                                alt="profile"
-                                className="h-6 w-6 rounded-full"
-                            />
-                        ) : (
-                            <FallbackAvatar name={message.sender.username} />
-                        )}
+                        {userVerified._id === message.sender._id &&
+                            (message.sender.profilePic ? (
+                                <img
+                                    src={message.sender.profilePic}
+                                    alt="profile"
+                                    className="h-6 w-6 rounded-full"
+                                />
+                            ) : (
+                                <FallbackAvatar
+                                    name={message.sender.username}
+                                />
+                            ))}
                     </div>
                 </Popover>
 
                 {/* Timestamp */}
-                <div className="mt-1 text-xs text-gray-300">
+                <div
+                    className={`mt-1 flex w-full text-xs ${isDarkMode ? 'text-white' : 'text-black'} ${userVerified._id === message.sender._id ? '' : 'flex-row-reverse'}`}
+                >
                     {new Date(message.timestamp).toLocaleString()}
                 </div>
             </div>
@@ -254,7 +283,7 @@ function MessageItem({ message, onReply, onDelete }) {
                 </div>
             </Modal>
 
-            {/* modal confirm delete */}
+            {/* modal share */}
             <Modal
                 open={isShareModalOpen}
                 onClose={() => setIsShareModalOpen(false)}

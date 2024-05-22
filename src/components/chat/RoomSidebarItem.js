@@ -15,8 +15,8 @@ function RoomSidebarItem({ room, selectedRoom, handleRoomSelect }) {
             key={room._id}
             className={`mb-2 cursor-pointer rounded px-4 py-2 font-['Helvetica'] text-[15px] font-medium ${
                 isSelected
-                    ? `${isDarkMode ? 'shadow-roomItem bg-[#2c2c30]' : ' shadow-roomItem bg-[#ffffff] text-[#000000]'}`
-                    : `duration-75 ${isDarkMode ? 'hover:shadow-roomItem hover:bg-[#2c2c30]' : 'hover:shadow-roomItem hover:bg-[#ffffff] '}`
+                    ? `${isDarkMode ? 'bg-[#2c2c30] shadow-roomItem' : ' bg-[#ffffff] text-[#000000] shadow-roomItem'}`
+                    : `duration-75 ${isDarkMode ? 'hover:bg-[#2c2c30] hover:shadow-roomItem' : 'hover:bg-[#ffffff] hover:shadow-roomItem '}`
             }`}
             onClick={() => handleRoomSelect(room)}
         >
@@ -29,7 +29,10 @@ function RoomSidebarItem({ room, selectedRoom, handleRoomSelect }) {
                             className="h-8 w-8 rounded-full"
                         />
                     ) : (
-                        <FallbackAvatar name={receiver.username} />
+                        <FallbackAvatar
+                            name={receiver.username}
+                            className={`h-8 w-8`}
+                        />
                     )}
                     <p className="ml-2">{receiver.username}</p>
                 </div>
@@ -42,7 +45,10 @@ function RoomSidebarItem({ room, selectedRoom, handleRoomSelect }) {
                             className="h-8 w-8 rounded-full"
                         />
                     ) : (
-                        <FallbackAvatar name={room.name} />
+                        <FallbackAvatar
+                            name={room.name}
+                            className={`h-8 w-8`}
+                        />
                     )}
                     <p className="ml-2">{room.name}</p>
                 </div>

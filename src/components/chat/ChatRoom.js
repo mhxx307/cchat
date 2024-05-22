@@ -135,7 +135,11 @@ const ChatRoom = () => {
         setLoading(true);
 
         try {
-            if (newMessage.trim() === '' && selectedImages.length === 0 && selectedFiles.length === 0) {
+            if (
+                newMessage.trim() === '' &&
+                selectedImages.length === 0 &&
+                selectedFiles.length === 0
+            ) {
                 return;
             }
 
@@ -146,7 +150,7 @@ const ChatRoom = () => {
                 senderId: userVerified._id,
                 content: newMessage,
                 images: imageUrls,
-                files: fileUrls, 
+                files: fileUrls,
                 roomId: selectedRoom._id,
                 replyMessageId: replyingMessage || null,
             };
@@ -190,7 +194,10 @@ const ChatRoom = () => {
             file,
             preview: URL.createObjectURL(file),
         }));
-        setSelectedImages((prevImages) => [...prevImages, ...selectedImagesArray]);
+        setSelectedImages((prevImages) => [
+            ...prevImages,
+            ...selectedImagesArray,
+        ]);
     };
 
     const handleFileChange = (e) => {
@@ -395,7 +402,7 @@ const ChatRoom = () => {
                             <span>{file.file.name}</span>
                             <button
                                 className="flex items-center justify-center rounded-full bg-red-500 p-1 text-xs text-white"
-                                style={{ backgroundColor: '#ed3b3b' }} // Thay đổi màu nền
+                                style={{ backgroundColor: '#ed3b3b' }}
                                 onClick={() => handleRemoveFile(index)}
                             >
                                 <svg
@@ -482,7 +489,7 @@ const ChatRoom = () => {
                 />
                 <label
                     htmlFor="imageUpload"
-                    className="rounded-md border bg-gray-200 p-2 cursor-pointer"
+                    className="mr-2 cursor-pointer rounded-md border bg-gray-200 p-2"
                 >
                     📷
                 </label>
@@ -495,7 +502,7 @@ const ChatRoom = () => {
                 />
                 <label
                     htmlFor="fileUpload"
-                    className="rounded-md border bg-gray-200 p-2 cursor-pointer"
+                    className="cursor-pointer rounded-md border bg-gray-200 p-2"
                 >
                     📄
                 </label>

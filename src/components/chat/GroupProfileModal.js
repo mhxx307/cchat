@@ -147,7 +147,7 @@ function GroupProfileModal() {
     return (
         <div className="mb-4 w-[400px] space-y-4 rounded bg-white px-8 pb-8 pt-6">
             <div className="flex items-center">
-                <label htmlFor="imageUpload" className="cursor-pointer">
+                <label htmlFor="imageUploadGroup" className="cursor-pointer">
                     {image.preview ? (
                         <img
                             src={image.preview}
@@ -160,7 +160,7 @@ function GroupProfileModal() {
                 </label>
                 <input
                     type="file"
-                    id="imageUpload"
+                    id="imageUploadGroup"
                     accept="image/*"
                     className="hidden"
                     onChange={handleImageChange}
@@ -210,7 +210,7 @@ function GroupProfileModal() {
                                 userVerified._id !== member._id && (
                                     <>
                                         {newAdmin === member._id ? (
-                                            <p>Key</p>
+                                            <GrUserAdmin className="text-blue-500" />
                                         ) : (
                                             <button
                                                 className="text-blue-500 hover:text-blue-700"
