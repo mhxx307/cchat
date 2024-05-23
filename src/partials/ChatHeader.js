@@ -65,6 +65,13 @@ function ChatHeader() {
             setUserVerified(updatedUser);
         });
 
+        socket.on('unfriended', async (response) => {
+            console.log('Unfriended:', response);
+            const updatedUser = await userService.getUserById(userVerified._id);
+            setUserVerified(updatedUser);
+            console.log('User updated:', updatedUser);
+        });
+
         return () => {
             socket.off('received-friend-request');
             socket.off('accepted-friend-request');
@@ -127,7 +134,7 @@ function ChatHeader() {
             const userUpdated = await userService.getUserById(userVerified._id);
             setUserVerified(userUpdated);
 
-            socket.emit('received-friend-request', response);
+            socket.emit('unfriend', response);
         } catch (error) {
             console.error('Error unfriending:', error);
         } finally {
