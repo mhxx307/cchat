@@ -7,6 +7,9 @@ import Loading from '../shared/Loading';
 import { useChat } from '~/hooks/useChat';
 import socket from '~/configs/socket';
 import { GrUserAdmin } from 'react-icons/gr';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '~/configs/firebase';
+import { v4 } from 'uuid';
 
 function GroupProfileModal() {
     const { userVerified } = useAuth();
@@ -46,14 +49,26 @@ function GroupProfileModal() {
     const handleSave = async () => {
         setLoading(true);
         try {
+            let imageUrl = selectedRoom.image;
+
+            if (image.raw) {
+                const imageRef = ref(
+                    storage,
+                    `groups/${image.raw.name + v4()}`,
+                );
+                const response = await uploadBytes(imageRef, image.raw);
+                imageUrl = await getDownloadURL(response.ref);
+            }
+
             const updatedRoom = await chatService.updateChatGroup({
                 chatroomId: selectedRoom._id,
                 members,
                 name: groupName,
-                image: selectedRoom.image || '',
+                image: imageUrl,
                 adminId: selectedRoom.admin._id,
                 newAdminId: newAdmin || selectedRoom.admin._id, // Assuming admin remains the same
             });
+
             setSelectedRoom(updatedRoom); // Assuming response contains updated room data
             setRoomList((prevRooms) =>
                 prevRooms.map((room) =>

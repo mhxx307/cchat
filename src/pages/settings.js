@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BsPencil } from 'react-icons/bs'; // Importing Pencil icon from react-icons
+import { BsPencil } from 'react-icons/bs';
 import { toast } from 'react-toastify';
 import { Loading } from '~/components/shared';
 import { useAuth } from '~/hooks/useAuth';
@@ -23,7 +23,6 @@ function Settings() {
         userVerified.profilePic || '',
     );
     const [loading, setLoading] = useState(false);
-    const [uploadLoading, setUploadLoading] = useState(false);
 
     const handleUsernameChange = (e) => {
         setUsername(e.target.value);
@@ -47,11 +46,14 @@ function Settings() {
         }
     };
 
-    const handleSaveAvatar = async () => {
-        if (avatar) {
-            try {
-                setUploadLoading(true);
-                if (avatar === undefined || avatar === null) return;
+    const handleSaveChanges = async (e) => {
+        e.preventDefault(); // Prevent form submission
+        setLoading(true); // Set loading to true when saving changes
+
+        try {
+            let profilePicUrl = userVerified.profilePic;
+
+            if (avatar) {
                 const imageRef = ref(
                     storage,
                     `profiles/${avatar?.name + v4()}`,
@@ -69,47 +71,28 @@ function Settings() {
                 }
 
                 const response = await uploadBytes(imageRef, avatar);
-                const url = await getDownloadURL(response.ref);
-
-                await userService.updateUserById(userVerified._id, {
-                    profilePic: url,
-                    username,
-                    email: userVerified.email,
-                });
-                setUserVerified({ ...userVerified, profilePic: url });
-                setAvatar(null);
-                setAvatarPreview(url);
-                toast.success('Avatar uploaded successfully');
-            } catch (error) {
-                console.error('Error uploading avatar:', error);
-                toast.error('Error uploading avatar');
-            } finally {
-                setUploadLoading(false);
+                profilePicUrl = await getDownloadURL(response.ref);
             }
-        }
-    };
 
-    const handleSaveChanges = async (e) => {
-        e.preventDefault(); // Prevent form submission
-        // Implement logic to save changes
-        console.log('Changes saved:', { username, avatar });
-        setLoading(true); // Set loading to true when saving changes
-        try {
-            // Implement logic to save changes
             await userService.updateUserById(userVerified._id, {
+                profilePic: profilePicUrl,
                 username,
-                profilePic: avatar,
                 email: userVerified.email,
             });
+
+            setUserVerified({
+                ...userVerified,
+                profilePic: profilePicUrl,
+                username,
+            });
+            setAvatar(null);
+            setAvatarPreview(profilePicUrl);
+            toast.success('Profile updated successfully');
         } catch (error) {
             console.error('Error occurred while saving changes:', error);
-            // Handle error
             toast.error('Error occurred while saving changes');
         } finally {
-            const updatedUser = { ...userVerified, username };
-            setUserVerified(updatedUser);
             setLoading(false); // Set loading to false when save process completes
-            toast.success('Profile updated successfully');
         }
     };
 
@@ -168,29 +151,6 @@ function Settings() {
                             </button>{' '}
                         </div>{' '}
                     </label>{' '}
-                    {/* save & cancel */}{' '}
-                    {avatar && (
-                        <div className="mt-2 flex items-center justify-center">
-                            <button
-                                onClick={handleSaveAvatar}
-                                disabled={uploadLoading}
-                                className="mx-2 text-xs text-blue-500 hover:underline focus:outline-none"
-                            >
-                                {uploadLoading ? <Loading /> : 'Save Avatar'}{' '}
-                            </button>{' '}
-                            <button
-                                onClick={() => {
-                                    setAvatar(null);
-                                    setAvatarPreview(
-                                        userVerified.profilePic || '',
-                                    );
-                                }}
-                                className="text-xs text-red-500 hover:underline focus:outline-none"
-                            >
-                                Cancel{' '}
-                            </button>{' '}
-                        </div>
-                    )}{' '}
                 </div>{' '}
                 <p className="mt-2 text-xs text-gray-500">
                     JPG, JPEG, PNG, GIF.Max size of 2 MB{' '}
@@ -198,7 +158,6 @@ function Settings() {
             </div>{' '}
             <form onSubmit={handleSaveChanges}>
                 {' '}
-                {/* Profile Settings */}{' '}
                 <div className="mb-8">
                     <div className="mb-4">
                         <label
@@ -217,23 +176,17 @@ function Settings() {
                         />
                     </div>{' '}
                 </div>{' '}
-                {/* Save Changes Button */}{' '}
                 <button
                     type={loading ? 'button' : 'submit'}
-                    className={`w-full rounded-lg bg-blue-500 py-3 font-semibold text-white transition duration-300 hover:bg-blue-600 ${
+                    className={`flex w-full items-center justify-center rounded-lg bg-blue-500 py-3 font-semibold text-white transition duration-300 hover:bg-blue-600 ${
                         loading ? 'cursor-not-allowed opacity-50' : ''
                     }`}
                 >
-                    {loading ? (
-                        // Show spinner when loading
-                        <Loading />
-                    ) : (
-                        'Save Changes'
-                    )}{' '}
+                    {loading ? <Loading /> : 'Save Changes'}{' '}
                 </button>{' '}
             </form>{' '}
-            <Link to="/change-password" className="mt-4 text-blue-500 block">
-                Change Password{' '}   
+            <Link to="/change-password" className="mt-4 block text-blue-500">
+                Change Password{' '}
             </Link>{' '}
         </div>
     );
