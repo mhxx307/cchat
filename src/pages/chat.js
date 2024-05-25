@@ -7,6 +7,8 @@ import Modal from 'react-responsive-modal';
 import { useEffect } from 'react';
 import socket from '~/configs/socket';
 import chatService from '~/services/chatService';
+import { FaSpinner, FaPhoneSlash } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 import { FaSpinner } from 'react-icons/fa';
 
 function ChatPage() {
@@ -21,6 +23,8 @@ function ChatPage() {
         recipient,
     } = useVideoCall();
     const { setSelectedRoom, fetchUpdatedRooms } = useChat();
+
+    const {t} = useTranslation();
 
     console.log('recipient:', recipient);
     console.log('showIsCalling:', showIsCalling);
@@ -52,8 +56,7 @@ function ChatPage() {
                     <ChatRoom />
                 ) : (
                     <div className="text-center text-gray-600">
-                        Select a user or group from the sidebar to start
-                        chatting.
+                        {`${t('top')}`}
                     </div>
                 )}
             </div>
