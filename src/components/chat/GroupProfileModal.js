@@ -212,7 +212,10 @@ function GroupProfileModal() {
                                         className="mr-2 h-8 w-8 rounded-full"
                                     />
                                 ) : (
-                                    <FallbackAvatar name={member.username} />
+                                    <FallbackAvatar
+                                        name={member.username}
+                                        className={'h-8 w-8'}
+                                    />
                                 )}
                                 <span className="ml-2">{member.username}</span>
                             </div>
