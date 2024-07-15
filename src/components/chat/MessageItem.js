@@ -179,6 +179,7 @@ function MessageItem({ message, onReply, onDelete }) {
                                     />
                                 ) : (
                                     <FallbackAvatar
+                                        className={'h-6 w-6'}
                                         name={message.sender.username}
                                     />
                                 )}
