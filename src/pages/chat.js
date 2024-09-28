@@ -7,7 +7,7 @@ import Modal from 'react-responsive-modal';
 import { useEffect } from 'react';
 import socket from '~/configs/socket';
 import chatService from '~/services/chatService';
-import { FaSpinner, FaPhoneSlash } from 'react-icons/fa';
+import { FaSpinner } from 'react-icons/fa';
 
 function ChatPage() {
     const { selectedRoom, isSidebarVisible } = useChat();
