@@ -131,6 +131,15 @@ const routes = [
             </MainLayout>
         ),
     },
+    {
+        path: "/test",
+        index: true,
+        element: (
+            <MainLayout>
+                <Test />
+            </MainLayout>
+        ),
+    },
 ];
 
 export function useRouteElements() {

@@ -224,7 +224,7 @@ const Sidebar = () => {
                 )}
             </div>
 
-            <h2 className="mb-4 text-2xl font-semibold">Chat Rooms</h2>
+            <h2 className="mb-4 text-2xl font-semibold">{t('chat')}</h2>
             <ul className="h-[60%] overflow-y-auto">
                 {roomList.length > 0 ? (
                     roomList.map((room) => (

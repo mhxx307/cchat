@@ -194,7 +194,11 @@ function ChatHeader() {
                             </span>
                             {openNotification && (
                                 <div
-                                    className={`absolute right-0 top-12 w-80 rounded-lg ${isDarkMode ? 'bg-[#282a2d]' : 'bg-[#fafafa]'} p-4 shadow-lg`}
+                                    className={`absolute right-0 top-12 w-80 rounded-lg ${
+                                        isDarkMode
+                                            ? 'bg-[#282a2d]'
+                                            : 'bg-[#fafafa]'
+                                    } max-h-96 overflow-y-auto p-4 shadow-lg`}
                                 >
                                     <h2 className="mb-4 text-xl font-semibold">
                                         Notifications
