@@ -9,7 +9,6 @@ import socket from '~/configs/socket';
 import chatService from '~/services/chatService';
 import { FaSpinner, FaPhoneSlash } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
-// import { FaSpinner } from 'react-icons/fa';
 
 function ChatPage() {
     const { selectedRoom, isSidebarVisible } = useChat();
