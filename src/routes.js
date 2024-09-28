@@ -1,31 +1,31 @@
-import { Navigate, useRoutes } from "react-router-dom";
-import HomePage from "./pages/home";
-import LoginPage from "./pages/login";
-import RegisterPage from "./pages/register";
-import MainLayout from "./layouts/MainLayout";
-import ChatPage from "./pages/chat";
-import ChatLayout from "./layouts/ChatLayout";
-import ForgotPasswordPage from "./pages/forgotPassword";
-import VerifyPasswordPage from "./pages/verify-password";
-import VerifyOtp from "./pages/verify-otp";
-import PhoneLogin from "./pages/phone-login";
-import SettingsPage from "./pages/settings";
-import { useAuth } from "./hooks/useAuth";
-import ChangePassword from "./pages/change-password";
+import { Navigate, useRoutes } from 'react-router-dom';
+import HomePage from './pages/home';
+import LoginPage from './pages/login';
+import RegisterPage from './pages/register';
+import MainLayout from './layouts/MainLayout';
+import ChatPage from './pages/chat';
+import ChatLayout from './layouts/ChatLayout';
+import ForgotPasswordPage from './pages/forgotPassword';
+import VerifyPasswordPage from './pages/verify-password';
+import VerifyOtp from './pages/verify-otp';
+import PhoneLogin from './pages/phone-login';
+import SettingsPage from './pages/settings';
+import { useAuth } from './hooks/useAuth';
+import ChangePassword from './pages/change-password';
 
 function ProtectedRoute({ children }) {
     const { userVerified } = useAuth();
-    return userVerified ? children : <Navigate to={"/login"} />;
+    return userVerified ? children : <Navigate to={'/login'} />;
 }
 
 function RejectedRoute({ children }) {
     const { userVerified } = useAuth();
-    return !userVerified ? children : <Navigate to={"/chat"} />;
+    return !userVerified ? children : <Navigate to={'/chat'} />;
 }
 
 const routes = [
     {
-        path: "/",
+        path: '/',
         index: true,
         element: (
             <RejectedRoute>
@@ -36,7 +36,7 @@ const routes = [
         ),
     },
     {
-        path: "/login",
+        path: '/login',
         index: true,
         element: (
             <RejectedRoute>
@@ -47,7 +47,7 @@ const routes = [
         ),
     },
     {
-        path: "/register",
+        path: '/register',
         index: true,
         element: (
             <RejectedRoute>
@@ -58,7 +58,7 @@ const routes = [
         ),
     },
     {
-        path: "/chat",
+        path: '/chat',
         index: true,
         element: (
             <ProtectedRoute>
@@ -69,7 +69,7 @@ const routes = [
         ),
     },
     {
-        path: "/forgot-password",
+        path: '/forgot-password',
         index: true,
         element: (
             <RejectedRoute>
@@ -80,7 +80,7 @@ const routes = [
         ),
     },
     {
-        path: "/verify-password",
+        path: '/verify-password',
         index: true,
         element: (
             <RejectedRoute>
@@ -91,7 +91,7 @@ const routes = [
         ),
     },
     {
-        path: "/verify-otp",
+        path: '/verify-otp',
         index: true,
         element: (
             <RejectedRoute>
@@ -103,7 +103,7 @@ const routes = [
     },
     // settings page
     {
-        path: "/settings",
+        path: '/settings',
         index: true,
         element: (
             <ProtectedRoute>
@@ -114,7 +114,7 @@ const routes = [
         ),
     },
     {
-        path: "/phone-login",
+        path: '/phone-login',
         index: true,
         element: (
             <MainLayout>
@@ -123,20 +123,11 @@ const routes = [
         ),
     },
     {
-        path: "/change-password",
+        path: '/change-password',
         index: true,
         element: (
             <MainLayout>
                 <ChangePassword />
-            </MainLayout>
-        ),
-    },
-    {
-        path: "/test",
-        index: true,
-        element: (
-            <MainLayout>
-                <Test />
             </MainLayout>
         ),
     },
