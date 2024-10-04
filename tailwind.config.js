@@ -18,9 +18,9 @@ module.exports = {
             boxShadow: {
                 roomItem: '0 1px 5px #00000012',
             },
-        },
-        fontFamily: {
-            sans: ['Helvetica', 'Arial', 'sans-serif'],
+            fontFamily: {
+                sans: ['Inter', 'Helvetica', 'Arial', 'sans-serif'], // Add Inter font
+            },
         },
     },
     plugins: [],

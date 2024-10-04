@@ -1,6 +1,19 @@
 {
-    "title": "Nhóm 7",
+    "title": "CCHAT",
     "search": "Tìm kiếm",
     "chat": "Nhóm chat",
-    "top":"Chọn một người dùng hoặc nhóm từ thanh bên để bắt đầu trò chuyện."
+    "select_a_user": "Chọn một người dùng hoặc nhóm từ thanh bên để bắt đầu trò chuyện.",
+    "no_chat_rooms": "Không có phòng chat nào",
+    "remove_person_confirmation": "Bạn có chắc chắn muốn xóa người này không?",
+    "notifications": "Thông báo",
+    "friend_requests": "Yêu cầu kết bạn",
+    "friends": "Bạn bè",
+    "accept": "Chấp nhận",
+    "reject": "Từ chối",
+    "unfriend": "Hủy kết bạn",
+    "logout": "Đăng xuất",
+    "collapse_sidebar": "←",
+    "expand_sidebar": "→",
+    "cancel": "Hủy",
+    "delete": "Xóa"
 }

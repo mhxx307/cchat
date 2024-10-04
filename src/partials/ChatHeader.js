@@ -3,7 +3,7 @@ import { RiLogoutBoxRLine } from 'react-icons/ri';
 import { HiSun, HiMoon, HiBell } from 'react-icons/hi';
 import { FaUserFriends } from 'react-icons/fa';
 import { CiSettings } from 'react-icons/ci';
-import { useTheme } from '../hooks/useTheme';
+import { useTheme } from '../hooks/useTheme'; // Import useTheme
 import { useAuth } from '../hooks/useAuth';
 import { useEffect, useState } from 'react';
 import notificationService from '~/services/notificationService';
@@ -13,7 +13,7 @@ import Modal from 'react-responsive-modal';
 import { useTranslation } from 'react-i18next';
 
 function ChatHeader() {
-    const { isDarkMode, toggleDarkMode } = useTheme();
+    const { isDarkMode, toggleDarkMode, themeStyles } = useTheme(); // Access theme styles
     const { setUserVerified, userVerified } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const [openNotification, setOpenNotification] = useState(false);
@@ -31,10 +31,6 @@ function ChatHeader() {
         setIsDeleteModalOpen(true);
     };
 
-    // console.log('User verified:', userVerified);
-
-    // console.log('Notifications:', notifications);
-
     // Fetch notifications
     useEffect(() => {
         const fetchNotifications = async () => {
@@ -51,32 +47,27 @@ function ChatHeader() {
         }
     }, [userVerified]);
 
-    // socket listen
+    // Socket listeners
     useEffect(() => {
         socket.on('received-friend-request', async (response) => {
-            console.log('Received friend request:', response);
             const updatedUser = await userService.getUserById(userVerified._id);
             setUserVerified(updatedUser);
         });
 
         socket.on('accepted-friend-request', async (response) => {
-            console.log('Accepted , rejected friend request:', response);
             const updatedUser = await userService.getUserById(userVerified._id);
             setUserVerified(updatedUser);
         });
 
         socket.on('unfriended', async (response) => {
-            console.log('Unfriended:', response);
             const updatedUser = await userService.getUserById(userVerified._id);
             setUserVerified(updatedUser);
-            console.log('User updated:', updatedUser);
         });
 
         return () => {
             socket.off('received-friend-request');
             socket.off('accepted-friend-request');
         };
-
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket]);
 
@@ -89,7 +80,6 @@ function ChatHeader() {
     };
 
     const handleAcceptFriendRequest = async (requester) => {
-        console.log('Accept friend request');
         try {
             const response = await userService.acceptFriendRequest({
                 requesterId: requester._id,
@@ -106,7 +96,6 @@ function ChatHeader() {
     };
 
     const handleRejectFriendRequest = async (requester) => {
-        console.log('Reject friend request', requester);
         try {
             const response = await userService.rejectedFriendRequest({
                 requesterId: requester._id,
@@ -118,7 +107,7 @@ function ChatHeader() {
 
             socket.emit('accept-friend-request', response);
         } catch (error) {
-            console.error('Error accepting friend request:', error);
+            console.error('Error rejecting friend request:', error);
         }
     };
 
@@ -145,23 +134,29 @@ function ChatHeader() {
 
     return (
         <header
-            className={`${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} p-4`}
+            className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'} p-4 shadow-md`}
+            style={{
+                backgroundColor: themeStyles.background,
+                color: themeStyles.text,
+            }} // Apply theme styles
         >
             <div className="container mx-auto flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">
                     <Link to="/">{t('title')}</Link>
                 </h1>
                 <nav>
-                    <ul className="flex items-center space-x-4">
+                    <ul className="flex items-center space-x-6">
                         <button
                             type="button"
                             onClick={() => changeLanguage('vi')}
+                            className="text-lg hover:text-blue-500"
                         >
                             vi
                         </button>
                         <button
                             type="button"
                             onClick={() => changeLanguage('en')}
+                            className="text-lg hover:text-blue-500"
                         >
                             en
                         </button>
@@ -180,34 +175,30 @@ function ChatHeader() {
                             </Link>
                         </li>
 
-                        <li>
+                        <li className="relative">
                             <span
-                                className="relative"
                                 onClick={handleOpenNotification}
+                                className="cursor-pointer"
                             >
                                 <HiBell size={24} />
                                 {notifications.length > 0 && (
-                                    <span className="absolute -right-2 -top-2 rounded-full bg-red-500 px-2 text-white">
+                                    <span className="absolute -right-2 -top-2 rounded-full bg-red-500 px-2 text-xs text-white">
                                         {notifications.length}
                                     </span>
                                 )}
                             </span>
                             {openNotification && (
                                 <div
-                                    className={`absolute right-0 top-12 w-80 rounded-lg ${
-                                        isDarkMode
-                                            ? 'bg-[#282a2d]'
-                                            : 'bg-[#fafafa]'
-                                    } max-h-96 overflow-y-auto p-4 shadow-lg`}
+                                    className={`absolute right-0 top-12 w-80 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-white'} max-h-96 overflow-y-auto border border-gray-300 p-4 shadow-lg`}
                                 >
-                                    <h2 className="mb-4 text-xl font-semibold">
-                                        Notifications
+                                    <h2 className="mb-4 border-b pb-2 text-xl font-semibold">
+                                        {t('notifications')}
                                     </h2>
                                     <ul>
                                         {notifications.map((notification) => (
                                             <li
                                                 key={notification._id}
-                                                className="mb-2"
+                                                className="mb-2 cursor-pointer rounded p-2 hover:bg-gray-200 hover:text-blue-500"
                                             >
                                                 <p>{notification.message}</p>
                                             </li>
@@ -217,10 +208,10 @@ function ChatHeader() {
                             )}
                         </li>
 
-                        {/* friend list and friend request list */}
-                        <li>
+                        {/* Friend list and friend request list */}
+                        <li className="relative">
                             <span
-                                className="relative"
+                                className="cursor-pointer"
                                 onClick={() =>
                                     setOpenFriendList(!openFriendList)
                                 }
@@ -228,87 +219,80 @@ function ChatHeader() {
                                 <FaUserFriends size={24} />
                                 {userVerified.friendRequestsReceived.length >
                                     0 && (
-                                    <span className="absolute -right-2 -top-2 rounded-full bg-red-500 px-2 text-white">
+                                    <span className="absolute -right-2 -top-2 rounded-full bg-red-500 px-2 text-xs text-white">
                                         {
                                             userVerified.friendRequestsReceived
                                                 .length
                                         }
                                     </span>
                                 )}
-
-                                {openFriendList && (
-                                    <div
-                                        className={`absolute right-0 top-12 w-80 rounded-lg ${isDarkMode ? 'bg-[#282a2d]' : 'bg-[#fafafa]'} p-4 shadow-lg`}
-                                    >
-                                        <h2 className="mb-4 text-xl font-semibold">
-                                            Friend Requests
-                                        </h2>
-                                        <ul>
-                                            {userVerified.friendRequestsReceived.map(
-                                                (request) => (
-                                                    <li
-                                                        key={request._id}
-                                                        className="mb-2 flex items-center justify-between"
-                                                    >
-                                                        <p>
-                                                            {request.username}
-                                                        </p>
-                                                        <div className="space-x-4">
-                                                            <button
-                                                                onClick={() =>
-                                                                    handleAcceptFriendRequest(
-                                                                        request,
-                                                                    )
-                                                                }
-                                                                className="mr-2 rounded-md bg-green-500 px-2 py-1 text-white  duration-75 hover:bg-green-600"
-                                                            >
-                                                                Accept
-                                                            </button>
-                                                            <button
-                                                                onClick={() =>
-                                                                    handleRejectFriendRequest(
-                                                                        request,
-                                                                    )
-                                                                }
-                                                                className="rounded-md bg-red-500 px-2 py-1 text-white  duration-75 hover:bg-red-600"
-                                                            >
-                                                                Reject
-                                                            </button>
-                                                        </div>
-                                                    </li>
-                                                ),
-                                            )}
-                                        </ul>
-
-                                        <h2 className="mb-4 text-xl font-semibold">
-                                            Friends
-                                        </h2>
-                                        <ul>
-                                            {userVerified.friends.map(
-                                                (friend) => (
-                                                    <li
-                                                        key={friend._id}
-                                                        className="mb-2 flex items-center justify-between"
-                                                    >
-                                                        <p>{friend.username}</p>
-                                                        <button
-                                                            onClick={() => {
-                                                                openModal();
-                                                                setFriendId(
-                                                                    friend._id,
-                                                                );
-                                                            }}
-                                                            className="rounded-md bg-red-500 px-2 py-1 text-white  duration-75 hover:bg-red-600"
-                                                        >
-                                                            Unfriend
-                                                        </button>
-                                                    </li>
-                                                ),
-                                            )}
-                                        </ul>
-                                    </div>
-                                )}
                             </span>
+                            {openFriendList && (
+                                <div
+                                    className={`absolute right-0 top-12 w-80 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-white'} border border-gray-300 p-4 shadow-lg`}
+                                >
+                                    <h2 className="mb-4 border-b pb-2 text-xl font-semibold">
+                                        {t('friend_requests')}
+                                    </h2>
+                                    <ul>
+                                        {userVerified.friendRequestsReceived.map(
+                                            (request) => (
+                                                <li
+                                                    key={request._id}
+                                                    className="mb-2 flex items-center justify-between rounded p-2 hover:bg-gray-200 hover:text-blue-500"
+                                                >
+                                                    <p>{request.username}</p>
+                                                    <div className="space-x-2">
+                                                        <button
+                                                            onClick={() =>
+                                                                handleAcceptFriendRequest(
+                                                                    request,
+                                                                )
+                                                            }
+                                                            className="rounded-md bg-green-500 px-2 py-1 text-white duration-75 hover:bg-green-600"
+                                                        >
+                                                            {t('accept')}
+                                                        </button>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleRejectFriendRequest(
+                                                                    request,
+                                                                )
+                                                            }
+                                                            className="rounded-md bg-red-500 px-2 py-1 text-white duration-75 hover:bg-red-600"
+                                                        >
+                                                            {t('reject')}
+                                                        </button>
+                                                    </div>
+                                                </li>
+                                            ),
+                                        )}
+                                    </ul>
+
+                                    <h2 className="mb-4 border-b pb-2 text-xl font-semibold">
+                                        {t('friends')}
+                                    </h2>
+                                    <ul>
+                                        {userVerified.friends.map((friend) => (
+                                            <li
+                                                key={friend._id}
+                                                className="mb-2 flex items-center justify-between rounded p-2 hover:bg-gray-200 hover:text-blue-500"
+                                            >
+                                                <p>{friend.username}</p>
+                                                <button
+                                                    onClick={() => {
+                                                        openModal();
+                                                        setFriendId(friend._id);
+                                                    }}
+                                                    className="rounded-md bg-red-500 px-2 py-1 text-white duration-75 hover:bg-red-600"
+                                                >
+                                                    {t('unfriend')}
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
                         </li>
 
                         <li className="cursor-pointer" onClick={handleLogout}>
@@ -321,14 +305,14 @@ function ChatHeader() {
                 </nav>
             </div>
 
-            {/* modal confirm delete */}
+            {/* Modal confirm delete */}
             <Modal
                 open={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 center
             >
                 <div className="p-4">
-                    <h2>Are you sure you want to remove this person?</h2>
+                    <h2>{t('remove_person_confirmation')}</h2>
                     <div className="flex justify-end space-x-2">
                         <button
                             onClick={() => setIsDeleteModalOpen(false)}

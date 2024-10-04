@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useTheme } from '~/hooks/useTheme';
 
 function HomePage() {
+    const { themeStyles } = useTheme(); // Access theme styles
+
     const bgImageStyle = {
         backgroundImage: `url(${process.env.PUBLIC_URL}/bg1.jpg)`,
         backgroundSize: 'cover',
@@ -9,14 +12,17 @@ function HomePage() {
 
     return (
         <div
-            className="flex flex-1 items-center justify-center bg-gray-100"
-            style={bgImageStyle}
+            className="flex flex-1 items-center justify-center"
+            style={{ ...bgImageStyle, backgroundColor: themeStyles.background }} // Apply background color
         >
             <div
-                style={{ height: '100%' }}
-                className="rounded-lg bg-white p-10 shadow-lg transition-shadow duration-300 hover:shadow-xl"
+                className="rounded-lg p-10 shadow-lg transition-shadow duration-300 hover:shadow-xl"
+                style={{ backgroundColor: themeStyles.text, height: '100%' }} // Apply text color as background
             >
-                <h2 className="mb-8 text-center text-3xl font-bold text-gray-800">
+                <h2
+                    className="mb-8 text-center text-3xl font-bold"
+                    style={{ color: 'black' }}
+                >
                     CChat
                 </h2>
                 <div className="flex justify-center space-x-6">

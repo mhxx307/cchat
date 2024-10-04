@@ -7,7 +7,7 @@ import Modal from 'react-responsive-modal';
 import { useEffect } from 'react';
 import socket from '~/configs/socket';
 import chatService from '~/services/chatService';
-import { FaSpinner, FaPhoneSlash } from 'react-icons/fa';
+import { FaSpinner } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 
 function ChatPage() {
@@ -55,7 +55,7 @@ function ChatPage() {
                     <ChatRoom />
                 ) : (
                     <div className="text-center text-gray-600">
-                        {`${t('top')}`}
+                        {`${t('select_a_user')}`}
                     </div>
                 )}
             </div>

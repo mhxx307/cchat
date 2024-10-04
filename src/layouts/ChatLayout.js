@@ -1,10 +1,12 @@
-import ChatHeader from "../partials/ChatHeader";
+import ChatHeader from '../partials/ChatHeader';
 
 function ChatLayout({ children }) {
     return (
-        <main className="min-h-screen flex flex-col">
+        <main className="flex min-h-screen flex-col">
             <ChatHeader />
-            <div className="flex-1 bg-[#e0e8ef] flex flex-col justify-center">{children}</div>
+            <div className="flex flex-1 flex-col justify-center bg-[#e0e8ef]">
+                {children}
+            </div>
         </main>
     );
 }

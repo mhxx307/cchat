@@ -2,6 +2,7 @@ import 'react-responsive-modal/styles.css';
 import { useEffect, useState } from 'react';
 import { MdOutlineGroupAdd } from 'react-icons/md';
 import { IoMdPersonAdd } from 'react-icons/io';
+import { FaPlus } from 'react-icons/fa';
 import Modal from 'react-responsive-modal';
 import { toast } from 'react-toastify';
 
@@ -33,9 +34,9 @@ const Sidebar = () => {
     const onOpenModal = () => setOpen(true);
     const onCloseModal = () => setOpen(false);
     const searchTermUserDebounce = useDebounce(searchTermUser, 500);
-    const { isDarkMode } = useTheme();
+    const { isDarkMode, themeStyles } = useTheme();
 
-    const {t} = useTranslation();
+    const { t } = useTranslation();
     // console.log('Current chat list:', roomList);
 
     // Fetch users when searchTermUser changes
@@ -155,10 +156,7 @@ const Sidebar = () => {
 
     // check if the user is already a friend
     const isFriend = (user) => {
-        const friend = userVerified.friends.find(
-            (friend) => friend._id === user._id,
-        );
-        return friend;
+        return userVerified.friends.some((friend) => friend._id === user._id);
     };
 
     return (
@@ -171,7 +169,7 @@ const Sidebar = () => {
                 className="absolute -right-[20px] top-1/2 -translate-y-1/2 transform text-xl text-[#000] focus:outline-none"
                 onClick={toggleSidebar}
             >
-                {isSidebarVisible ? '←' : '→'}
+                {isSidebarVisible ? t('collapse_sidebar') : t('expand_sidebar')}
             </button>
 
             <div className="relative mb-4">
@@ -225,7 +223,7 @@ const Sidebar = () => {
             </div>
 
             <h2 className="mb-4 text-2xl font-semibold">{t('chat')}</h2>
-            <ul className="h-[60%] overflow-y-auto">
+            <ul className="h-[100%] overflow-y-auto">
                 {roomList.length > 0 ? (
                     roomList.map((room) => (
                         <RoomSidebarItem
@@ -237,10 +235,16 @@ const Sidebar = () => {
                     ))
                 ) : (
                     <li className="text-center text-gray-600">
-                        No chat rooms available
+                        {t('no_chat_rooms_available')}
                     </li>
                 )}
             </ul>
+
+            <div className="fixed bottom-5 right-5">
+                <button className="rounded-full bg-blue-500 p-3 shadow-lg transition duration-200 hover:bg-blue-600">
+                    <FaPlus className="text-white" />
+                </button>
+            </div>
         </div>
     );
 };

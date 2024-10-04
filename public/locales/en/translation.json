@@ -1,6 +1,19 @@
 {
-    "title": "Team 7",
+    "title": "CCHAT",
     "search": "Search",
-    "chat":"Chat Rooms",
-    "top":"Select a user or group from the sidebar to start chatting."
+    "chat": "Chat Rooms",
+    "select_a_user": "Select a user or group from the sidebar to start chatting.",
+    "no_chat_rooms": "No chat rooms available",
+    "remove_person_confirmation": "Are you sure you want to remove this person?",
+    "notifications": "Notifications",
+    "friend_requests": "Friend Requests",
+    "friends": "Friends",
+    "accept": "Accept",
+    "reject": "Reject",
+    "unfriend": "Unfriend",
+    "logout": "Logout",
+    "collapse_sidebar": "←",
+    "expand_sidebar": "→",
+    "cancel": "Cancel",
+    "delete": "Delete"
 }

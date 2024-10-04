@@ -253,10 +253,10 @@ const ChatRoom = () => {
 
     return (
         <div
-            className={`flex h-[80vh] flex-col justify-between ${isDarkMode ? 'bg-[#282a2d]' : 'bg-[#fafafa]'} pb-2 md:h-full`}
+            className={`flex h-[80vh] flex-col justify-between ${isDarkMode ? 'bg-[#282a2d]' : 'bg-[#fafafa]'} p-4 pb-4 shadow-lg md:h-full`}
         >
             {/* header, info */}
-            <div className="flex justify-between border-b-[1px] p-1">
+            <div className="flex justify-between border-b-[1px] p-2">
                 <div className="flex space-x-4">
                     {selectedRoom.type === '1v1' && (
                         <div className="flex items-center justify-center">
@@ -314,7 +314,7 @@ const ChatRoom = () => {
 
                 <div className="flex space-x-4">
                     <button
-                        className={`focus:outline-none ${isDarkMode ? 'text-white' : 'text-black'}`}
+                        className={`focus:outline-none ${isDarkMode ? 'text-white hover:text-blue-400' : 'text-black hover:text-blue-600'} transition duration-200`}
                         onClick={() => {
                             console.log('Call video');
                             handleCallRequest(
@@ -369,11 +369,10 @@ const ChatRoom = () => {
                         <img
                             src={image.preview}
                             alt={`Preview ${index}`}
-                            className="h-20 w-20 rounded-md object-cover"
+                            className="h-20 w-20 rounded-md border-2 border-gray-300 object-cover shadow-md"
                         />
                         <button
                             className="absolute right-0 top-0 flex items-center justify-center rounded-full bg-red-500 p-1 text-xs text-white"
-                            style={{ backgroundColor: '#ed3b3b' }} // Thay đổi màu nền
                             onClick={() => handleRemoveImage(index)}
                         >
                             <svg
@@ -402,7 +401,6 @@ const ChatRoom = () => {
                             <span>{file.file.name}</span>
                             <button
                                 className="flex items-center justify-center rounded-full bg-red-500 p-1 text-xs text-white"
-                                style={{ backgroundColor: '#ed3b3b' }}
                                 onClick={() => handleRemoveFile(index)}
                             >
                                 <svg
@@ -454,7 +452,7 @@ const ChatRoom = () => {
                 </div>
             )}
 
-            <div className="flex items-center">
+            <div className="mt-2 flex items-center">
                 {showEmojiPicker && (
                     <div className="absolute right-[5%] top-[40%]">
                         <EmojiPicker
@@ -472,7 +470,7 @@ const ChatRoom = () => {
                     placeholder="Type your message..."
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    className="mr-2 flex-1 rounded-md border p-2 focus:border-blue-500 focus:outline-none"
+                    className="mr-2 flex-1 rounded-lg border border-gray-300 p-2 shadow-md transition duration-200 hover:shadow-lg focus:border-blue-500 focus:outline-none"
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                             handleSendMessage();
@@ -515,7 +513,7 @@ const ChatRoom = () => {
                 <button
                     onClick={handleSendMessage}
                     disabled={loading}
-                    className="focus:shadow-outline rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-600 focus:outline-none"
+                    className="focus:shadow-outline rounded-lg bg-blue-500 px-4 py-2 font-bold text-white transition duration-200 hover:bg-blue-600"
                 >
                     {loading ? 'Sending...' : 'Send'}
                 </button>
