@@ -1,4 +1,4 @@
-# Cong Nghe Moi Frontend
+# CCHAT Frontend
 
 This project is the frontend part of the Cong Nghe Moi application, built using React and bootstrapped with [Create React App](https://github.com/facebook/create-react-app). The application is designed to provide a seamless user experience for chatting and video calling functionalities.
 
