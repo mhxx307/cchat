@@ -57,5 +57,6 @@ REACT_APP_APP_ID=your_app_id
 Replace the placeholders with your actual Firebase configuration values.
 
 ## Usage
-
+username: minhquan.lavo@gmail.com
+password: qqqqwwww
 After successfully installing and configuring the application, you
